@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Edge Delivery Services + Adobe Commerce Storefront</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-2: #161b22;
+    --bg-3: #1f2630;
+    --fg: #e6edf3;
+    --fg-dim: #9aa7b4;
+    --fg-mute: #6b7785;
+    --accent: #ff3b30;
+    --accent-soft: #ff6f64;
+    --kw: #ff7b72;
+    --str: #a5d6ff;
+    --num: #f2cc60;
+    --com: #8b949e;
+    --fn: #d2a8ff;
+    --var: #79c0ff;
+    --line: #30363d;
+    --good: #3fb950;
+    --warn: #d29922;
+    --code: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: var(--sans); overflow: hidden; }
+  a { color: var(--accent-soft); text-decoration: none; }
+
+  /* Slide container */
+  #deck { position: relative; width: 100vw; height: 100vh; }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column; justify-content: center;
+    padding: clamp(2rem, 5vw, 4.5rem) clamp(2rem, 6vw, 6rem);
+    overflow: hidden;
+  }
+  .slide.active { display: flex; }
+  .slide.left { display: flex; justify-content: flex-start; }
+
+  /* Typography */
+  h1 { font-size: clamp(2rem, 5.4vw, 4.5rem); margin: 0 0 .5em; line-height: 1.05; letter-spacing: -.02em; }
+  h2 { font-size: clamp(1.5rem, 3.4vw, 2.6rem); margin: 0 0 .8em; line-height: 1.1; letter-spacing: -.01em; color: var(--fg); }
+  h3 { font-size: clamp(1.05rem, 1.8vw, 1.4rem); margin: 0 0 .4em; color: var(--accent-soft); font-weight: 600; }
+  p, li { font-size: clamp(1rem, 1.5vw, 1.3rem); line-height: 1.55; color: var(--fg); }
+  .lead { font-size: clamp(1.15rem, 2vw, 1.55rem); color: var(--fg-dim); max-width: 70ch; }
+  .eyebrow { display: inline-block; font-size: .85rem; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 1rem; }
+  .accent { color: var(--accent); }
+  .muted { color: var(--fg-mute); }
+  .dim { color: var(--fg-dim); }
+  ul.tight li { margin-bottom: .25em; }
+  ul.airy li { margin-bottom: .8em; }
+  ul.checks { list-style: none; padding-left: 0; }
+  ul.checks li::before { content: "→ "; color: var(--accent); font-weight: bold; margin-right: .5em; }
+  hr.sep { border: 0; border-top: 1px solid var(--line); margin: 1.2em 0; }
+
+  /* Code blocks */
+  pre.code {
+    background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px;
+    padding: 1rem 1.25rem; font-family: var(--code);
+    font-size: clamp(.78rem, 1.05vw, .95rem); line-height: 1.55;
+    overflow: auto; max-width: 100%;
+    white-space: pre;
+  }
+  pre.code .kw { color: var(--kw); }
+  pre.code .str { color: var(--str); }
+  pre.code .num { color: var(--num); }
+  pre.code .com { color: var(--com); font-style: italic; }
+  pre.code .fn { color: var(--fn); }
+  pre.code .var { color: var(--var); }
+  pre.code .hl { background: rgba(255,59,48,.14); border-left: 3px solid var(--accent); display: block; margin: 0 -1.25rem; padding: 0 1.25rem; }
+  code.inline { font-family: var(--code); background: var(--bg-3); padding: 0.08em 0.4em; border-radius: 4px; font-size: 0.92em; color: var(--str); }
+
+  /* Layout helpers */
+  .row { display: flex; gap: 1.5rem; align-items: stretch; }
+  .row.center { align-items: center; }
+  .col { flex: 1; min-width: 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: .9rem; }
+  .card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem 1.25rem; }
+  .card h3 { margin-top: 0; }
+  .card p { font-size: clamp(.88rem, 1.15vw, 1rem); margin: 0; color: var(--fg-dim); }
+  .pill { display: inline-block; background: var(--bg-3); color: var(--fg-dim); padding: .15em .65em; border-radius: 999px; font-size: .8em; border: 1px solid var(--line); margin-right: .35em; }
+  .pill.accent { background: rgba(255,59,48,.12); border-color: rgba(255,59,48,.4); color: var(--accent-soft); }
+
+  /* Diagrams */
+  svg.diagram { width: 100%; height: auto; max-height: 60vh; color: var(--fg-dim); }
+  svg.diagram .box { fill: var(--bg-2); stroke: var(--line); stroke-width: 1.5; }
+  svg.diagram .box.accent { stroke: var(--accent); }
+  svg.diagram .label { fill: var(--fg); font-family: var(--sans); font-size: 14px; font-weight: 500; }
+  svg.diagram .sub { fill: var(--fg-mute); font-family: var(--sans); font-size: 11px; }
+  svg.diagram .arrow { stroke: var(--fg-dim); stroke-width: 1.5; fill: none; }
+  svg.diagram .arrow.accent { stroke: var(--accent); }
+  svg.diagram .pulse { fill: var(--accent); }
+
+  /* Title slide */
+  .title-slide { background: radial-gradient(circle at 30% 30%, rgba(255,59,48,.12), transparent 50%), radial-gradient(circle at 70% 70%, rgba(121,192,255,.06), transparent 50%); }
+  .title-slide h1 { font-size: clamp(2.5rem, 6.5vw, 5.4rem); }
+  .title-slide .meta { color: var(--fg-mute); font-size: 1.05rem; margin-top: 2rem; }
+
+  /* Section divider */
+  .section-divider { background: linear-gradient(135deg, rgba(255,59,48,.06), transparent 60%); }
+  .section-divider .num { font-size: clamp(8rem, 22vw, 18rem); font-weight: 800; line-height: 1; color: rgba(255,59,48,.15); margin: 0; }
+  .section-divider h1 { margin-top: -0.4em; }
+
+  /* Notes panel */
+  #notes {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: rgba(13,17,23,.96);
+    border-top: 1px solid var(--line);
+    padding: .9rem 1.5rem;
+    font-size: .95rem; color: var(--fg-dim);
+    max-height: 28vh; overflow-y: auto;
+    z-index: 50;
+    backdrop-filter: blur(10px);
+  }
+  #notes[hidden] { display: none; }
+  #notes .label { color: var(--accent); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: .72rem; margin-right: .5em; }
+  #notes p { margin: .25em 0; font-size: .95rem; color: var(--fg); }
+
+  /* HUD */
+  #hud {
+    position: fixed; bottom: 1rem; right: 1.25rem;
+    color: var(--fg-mute); font-family: var(--code); font-size: .8rem;
+    background: rgba(22,27,34,.7); padding: .25rem .6rem; border-radius: 6px;
+    border: 1px solid var(--line);
+    z-index: 40;
+  }
+  #hud.with-notes { bottom: calc(28vh + 1rem); }
+
+  /* Help overlay */
+  #help {
+    position: fixed; inset: 0; background: rgba(0,0,0,.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: 2rem;
+  }
+  #help[hidden] { display: none; }
+  #help .panel { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 2rem 2.5rem; max-width: 480px; }
+  #help kbd { background: var(--bg-3); border: 1px solid var(--line); border-bottom-width: 2px; padding: .15em .5em; border-radius: 4px; font-family: var(--code); font-size: .85em; }
+  #help table { width: 100%; border-collapse: collapse; }
+  #help td { padding: .35em .25em; }
+  #help td:first-child { white-space: nowrap; padding-right: 1em; }
+
+  /* Block↔dropin mapping table */
+  table.mapping { border-collapse: collapse; width: 100%; font-size: clamp(.85rem, 1.15vw, 1rem); }
+  table.mapping th, table.mapping td { padding: .5em .8em; text-align: left; border-bottom: 1px solid var(--line); }
+  table.mapping th { color: var(--accent-soft); font-weight: 600; font-size: .82em; letter-spacing: .12em; text-transform: uppercase; }
+  table.mapping td:first-child { font-family: var(--code); color: var(--var); }
+  table.mapping td:nth-child(2) { color: var(--fg-mute); padding: .5em .4em; text-align: center; }
+  table.mapping td:last-child { font-family: var(--code); color: var(--str); }
+
+  /* Authoring mockup */
+  .da-mock { background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; padding: 1rem; font-family: var(--code); font-size: .88rem; }
+  .da-mock .da-head { color: var(--accent-soft); font-weight: 700; margin-bottom: .8em; padding-bottom: .5em; border-bottom: 1px solid var(--line); }
+  .da-mock .da-row { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; padding: .35em 0; border-bottom: 1px dashed rgba(255,255,255,.04); }
+  .da-mock .da-row .k { color: var(--fg-dim); }
+  .da-mock .da-row .v { color: var(--str); }
+  .da-mock .da-row .v.bool { color: var(--num); }
+
+  /* Bridge / pull-quote slide */
+  .pull blockquote { font-size: clamp(1.4rem, 3vw, 2.4rem); line-height: 1.3; margin: 0; color: var(--fg); max-width: 22ch; font-weight: 500; }
+  .pull blockquote::before { content: "\201C"; color: var(--accent); font-size: 1.5em; line-height: 0; vertical-align: -0.4em; margin-right: .15em; }
+
+  /* Layered model */
+  .layer-stack { display: flex; flex-direction: column; gap: .8rem; max-width: 720px; margin: 0 auto; }
+  .layer { background: var(--bg-2); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: .9rem 1.25rem; }
+  .layer h3 { margin: 0 0 .2em; color: var(--accent); font-size: 1.1rem; }
+  .layer p { margin: 0; color: var(--fg-dim); font-size: .92rem; font-family: var(--code); }
+  .layer.l2 { border-left-color: var(--var); }
+  .layer.l2 h3 { color: var(--var); }
+  .layer.l3 { border-left-color: var(--good); }
+  .layer.l3 h3 { color: var(--good); }
+
+  /* Q&A slide */
+  .qa-slide { text-align: center; }
+  .qa-slide h1 { font-size: clamp(5rem, 14vw, 12rem); color: var(--accent); }
+  .qa-slide p { font-size: clamp(1rem, 1.6vw, 1.4rem); color: var(--fg-mute); }
+</style>
+</head>
+<body>
+<main id="deck">
+
+<!-- ════════════════════════ SLIDE 1: TITLE ════════════════════════ -->
+<section class="slide title-slide" data-notes="Welcome. Today's talk introduces two systems and how they fit together. Plan: ~30 min content, ~15 min Q&A. The deck itself is a single static HTML file — no build step — which is a tiny preview of one of the points we'll make about EDS.">
+  <span class="eyebrow">Adobe · Lightning Talk</span>
+  <h1>Edge Delivery Services<br><span class="accent">+</span> Adobe Commerce Storefront</h1>
+  <p class="lead">A tour of the EDS stack, the dropins ecosystem, and how they combine to ship fast, authorable commerce sites.</p>
+  <p class="meta">Stephen Rugh · rugh@adobe.com · 2026-05-04</p>
+  <p class="muted" style="margin-top:1rem; font-size:.9rem; max-width:60ch;">Generated using AI with access to our documentation and code, and human-reviewed for accuracy.</p>
+</section>
+
+<!-- ════════════════════════ SLIDE 2: AGENDA ════════════════════════ -->
+<section class="slide" data-notes="Three sections, roughly equal time. Each section stands on its own; the third is where the magic happens. Q&A at the end — interrupt for clarifications, but hold deeper questions.">
+  <span class="eyebrow">Agenda</span>
+  <h2>Three sections, then questions</h2>
+  <div class="grid-3" style="margin-top:1.5rem;">
+    <div class="card"><h3>1 · EDS as a stack</h3><p>What it is, how content moves from a doc to the edge, and the runtime model.</p><p class="dim" style="margin-top:.5em;">~10 min</p></div>
+    <div class="card"><h3>2 · Dropins as a stack</h3><p>Self-contained commerce UI components. The catalog, the architecture, the contract.</p><p class="dim" style="margin-top:.5em;">~10 min</p></div>
+    <div class="card"><h3>3 · How they come together</h3><p>The boilerplate-commerce reference: how blocks mount dropins into edge-served pages.</p><p class="dim" style="margin-top:.5em;">~15 min</p></div>
+  </div>
+</section>
+
+<!-- ════════════════════════ SECTION 1 DIVIDER (logical, no slide num) ════════════════════════ -->
+
+<!-- SLIDE 3 -->
+<section class="slide" data-notes="The elevator pitch. EDS is fundamentally a different posture than a typical SPA: instead of shipping a build artifact, authors work in their tool of choice — docs, SharePoint, DA, or visual editors like Universal Editor and Experience Workspace — while developers ship code separately. Two pipelines, merged at the edge. We'll cover performance specifically a few slides in.">
+  <span class="eyebrow">Section 1 · EDS</span>
+  <h2>What is Edge Delivery Services?</h2>
+  <p class="lead">A document-authored, edge-served, vanilla-JS web stack — built around Core Web Vitals, not around a framework.</p>
+  <ul class="checks airy" style="margin-top:1.5rem;">
+    <li>Authors pick their tool: <strong>Google Docs, SharePoint, DA</strong>, or visual editors (<strong>Universal Editor</strong>, early-access <strong>Experience Workspace</strong>)</li>
+    <li><strong>Content and code live in separate pipelines</strong> — edge-cached on <code class="inline">aem.page</code> / <code class="inline">aem.live</code></li>
+    <li><strong>No build step.</strong> No bundler. ES modules in the browser. CSS unbundled.</li>
+  </ul>
+</section>
+
+<!-- SLIDE 4: AUTHORING DIAGRAM -->
+<section class="slide" data-notes="Two parallel pipelines. Top lane: authors work in their tool of choice; the content pipeline ingests their edits. Bottom lane: developers push code to GitHub; the code pipeline builds and ships it. Both meet at the EDS edge — the same URL serves merged content + code, cached and CWV-tuned. .aem.page is the preview surface, .aem.live is publish. Sidekick is the author's preview/publish UI. URL paths mirror the content tree.">
+  <span class="eyebrow">Section 1 · Authoring</span>
+  <h2>Two pipelines, merged at the edge</h2>
+  <svg class="diagram" viewBox="0 0 1200 360" xmlns="http://www.w3.org/2000/svg">
+    <!-- Authors -->
+    <rect class="box" x="40" y="40" width="220" height="100" rx="8"/>
+    <text class="label" x="150" y="75" text-anchor="middle">Authors</text>
+    <text class="sub" x="150" y="100" text-anchor="middle">Docs · SharePoint · DA</text>
+    <text class="sub" x="150" y="118" text-anchor="middle">Universal Editor · EW</text>
+
+    <!-- Content pipeline -->
+    <rect class="box" x="320" y="40" width="220" height="100" rx="8"/>
+    <text class="label" x="430" y="75" text-anchor="middle">Content pipeline</text>
+    <text class="sub" x="430" y="100" text-anchor="middle">ingest · normalize</text>
+    <text class="sub" x="430" y="118" text-anchor="middle">index · fragments</text>
+
+    <!-- Developers -->
+    <rect class="box" x="40" y="220" width="220" height="100" rx="8"/>
+    <text class="label" x="150" y="255" text-anchor="middle">Developers</text>
+    <text class="sub" x="150" y="280" text-anchor="middle">GitHub repo</text>
+    <text class="sub" x="150" y="298" text-anchor="middle">/blocks · /scripts · /styles</text>
+
+    <!-- Code pipeline -->
+    <rect class="box" x="320" y="220" width="220" height="100" rx="8"/>
+    <text class="label" x="430" y="255" text-anchor="middle">Code pipeline</text>
+    <text class="sub" x="430" y="280" text-anchor="middle">resolve modules</text>
+    <text class="sub" x="430" y="298" text-anchor="middle">no bundler</text>
+
+    <!-- Arrows: source → pipeline -->
+    <path class="arrow" d="M 260 90 L 320 90"  marker-end="url(#a)"/>
+    <path class="arrow" d="M 260 270 L 320 270" marker-end="url(#a)"/>
+
+    <!-- EDS merge -->
+    <rect class="box accent" x="620" y="120" width="200" height="120" rx="8"/>
+    <text class="label" x="720" y="160" text-anchor="middle">EDS</text>
+    <text class="sub" x="720" y="185" text-anchor="middle">merges content</text>
+    <text class="sub" x="720" y="203" text-anchor="middle">+ code at request time</text>
+    <text class="sub" x="720" y="225" text-anchor="middle" style="fill:var(--accent-soft);">edge-cached · CWV-tuned</text>
+
+    <!-- Arrows: pipelines → EDS -->
+    <path class="arrow accent" d="M 540 90  Q 590 90  620 150" marker-end="url(#aa)"/>
+    <path class="arrow accent" d="M 540 270 Q 590 270 620 210" marker-end="url(#aa)"/>
+
+    <!-- .page / .live outputs -->
+    <rect class="box" x="900" y="40" width="240" height="100" rx="8"/>
+    <text class="label" x="1020" y="80" text-anchor="middle">aem.page</text>
+    <text class="sub" x="1020" y="105" text-anchor="middle">preview</text>
+    <text class="sub" x="1020" y="123" text-anchor="middle">authors + reviewers</text>
+
+    <rect class="box accent" x="900" y="220" width="240" height="100" rx="8"/>
+    <text class="label" x="1020" y="260" text-anchor="middle">aem.live</text>
+    <text class="sub" x="1020" y="285" text-anchor="middle">publish</text>
+    <text class="sub" x="1020" y="303" text-anchor="middle">indexed · public</text>
+
+    <!-- Arrows: EDS → outputs -->
+    <path class="arrow" d="M 820 150 Q 860 150 900 90"  marker-end="url(#a)"/>
+    <path class="arrow accent" d="M 820 210 Q 860 210 900 270" marker-end="url(#aa)"/>
+
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--fg-dim)"/></marker>
+      <marker id="aa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/></marker>
+    </defs>
+  </svg>
+</section>
+
+<!-- SLIDE 5: BLOCKS MODEL -->
+<section class="slide" data-notes="Blocks are EDS's component model. The author types a table; the convention is name-of-block in the first cell. At runtime, scripts/aem.js walks the DOM, finds the element with that class, dynamically imports blocks/{name}/{name}.js, calls decorate(block). CSS is loaded the same way. So a block is a folder, an authored table, and a decorate function. That's it. There's no JSX, no virtual DOM, no router.">
+  <span class="eyebrow">Section 1 · Blocks</span>
+  <h2>The blocks model</h2>
+  <div class="grid-2">
+    <div>
+      <h3>What the author writes</h3>
+      <pre class="code"><span class="com">// in a Google Doc / DA — a 1-cell table:</span>
+┌──────────────────────────┐
+│ <span class="kw">Hero</span>                     │
+├──────────────────────────┤
+│ <span class="str">Welcome to our store</span>     │
+│ <span class="str">[image: hero.jpg]</span>        │
+└──────────────────────────┘</pre>
+      <h3 style="margin-top:1rem;">What ships in the repo</h3>
+      <pre class="code">blocks/hero/
+  hero.<span class="fn">js</span>     <span class="com">// export default decorate(block)</span>
+  hero.<span class="fn">css</span>    <span class="com">// scoped to .hero</span></pre>
+    </div>
+    <div>
+      <h3>The contract</h3>
+      <pre class="code"><span class="com">// blocks/hero/hero.js</span>
+<span class="kw">export default function</span> <span class="fn">decorate</span>(block) {
+  <span class="com">// `block` is a &lt;div class="hero"&gt;
+  // already wrapped by the EDS runtime.
+  // Mutate it however you like.</span>
+  <span class="kw">const</span> [picture, heading] = block.children;
+  block.innerHTML = <span class="str">''</span>;
+  block.append(picture, heading);
+}</pre>
+      <p class="dim" style="margin-top:1rem;">Blocks are dynamically imported only on pages that use them. No bundle. No registry.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 6: THREE-PHASE RUNTIME -->
+<section class="slide" data-notes="Every EDS page goes through three phases. loadEager: the absolute minimum to hit LCP — first section, first image, body.appear class. loadLazy: header, footer, remaining sections, lazy-styles.css. loadDelayed: deferred 3 seconds — analytics, third-party scripts, anything that doesn't help the user. This is the framework's only opinion: the order in which things load.">
+  <span class="eyebrow">Section 1 · Runtime</span>
+  <h2>Three-phase loading</h2>
+  <svg class="diagram" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg" style="max-height:50vh;">
+    <!-- Timeline -->
+    <line class="arrow" x1="60" y1="160" x2="1140" y2="160" marker-end="url(#tarr)"/>
+    <text class="sub" x="60" y="290" text-anchor="start">0 ms</text>
+    <text class="sub" x="1100" y="290" text-anchor="end">→ time</text>
+
+    <!-- Eager -->
+    <rect class="box accent" x="60" y="80" width="280" height="100" rx="6"/>
+    <text class="label" x="200" y="115" text-anchor="middle">loadEager</text>
+    <text class="sub" x="200" y="138" text-anchor="middle">decorateMain → first section</text>
+    <text class="sub" x="200" y="156" text-anchor="middle">waitForFirstImage → body.appear</text>
+
+    <!-- LCP marker -->
+    <line x1="345" y1="50" x2="345" y2="270" stroke="var(--good)" stroke-width="2" stroke-dasharray="4 3"/>
+    <text x="350" y="65" style="fill:var(--good); font-family:var(--sans); font-size:13px; font-weight:600;">LCP</text>
+
+    <!-- Lazy -->
+    <rect class="box" x="360" y="80" width="380" height="100" rx="6"/>
+    <text class="label" x="550" y="115" text-anchor="middle">loadLazy</text>
+    <text class="sub" x="550" y="138" text-anchor="middle">header · footer · remaining sections</text>
+    <text class="sub" x="550" y="156" text-anchor="middle">lazy-styles.css · fonts</text>
+
+    <!-- Delayed -->
+    <rect class="box" x="760" y="80" width="380" height="100" rx="6"/>
+    <text class="label" x="950" y="115" text-anchor="middle">loadDelayed</text>
+    <text class="sub" x="950" y="138" text-anchor="middle">setTimeout(import('./delayed.js'), 3000)</text>
+    <text class="sub" x="950" y="156" text-anchor="middle">analytics · third-party · RUM beacons</text>
+
+    <!-- ticks -->
+    <line x1="60" y1="155" x2="60" y2="175" stroke="var(--fg-dim)"/>
+    <line x1="345" y1="155" x2="345" y2="175" stroke="var(--good)" stroke-width="2"/>
+    <line x1="745" y1="155" x2="745" y2="175" stroke="var(--fg-dim)"/>
+    <text class="sub" x="345" y="200" text-anchor="middle">~LCP</text>
+    <text class="sub" x="745" y="200" text-anchor="middle">+3000ms</text>
+
+    <defs>
+      <marker id="tarr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--fg-dim)"/></marker>
+    </defs>
+  </svg>
+</section>
+
+<!-- SLIDE 7: PROJECT STRUCTURE -->
+<section class="slide" data-notes="An EDS project has two halves. The repo holds code — blocks, scripts, styles, head.html. The Configuration Service holds site identity: folder mappings (URL prefix → content source), indexing rules, permissions, publish access, storefront config. Older docs reference fstab.yaml and helix-query.yaml; those are superseded by Config Service for current projects. Notice what isn't in the repo: no node_modules, no webpack.config, no dist/.">
+  <span class="eyebrow">Section 1 · Layout</span>
+  <h2>Anatomy of an EDS project</h2>
+  <div class="grid-2">
+    <div>
+      <h3>The repo — code only</h3>
+      <pre class="code"><span class="com">aem-boilerplate/</span>
+├─ <span class="kw">blocks/</span>
+│  ├─ header/        <span class="com">// header.js + header.css</span>
+│  ├─ footer/
+│  ├─ hero/
+│  ├─ cards/
+│  └─ fragment/      <span class="com">// reusable doc fragments</span>
+├─ <span class="kw">scripts/</span>
+│  ├─ aem.js         <span class="com">// EDS runtime library</span>
+│  ├─ scripts.js     <span class="com">// project lifecycle</span>
+│  └─ delayed.js
+├─ <span class="kw">styles/</span>
+│  ├─ styles.css     <span class="com">// eager</span>
+│  ├─ lazy-styles.css
+│  └─ fonts.css
+├─ head.html         <span class="com">// goes into every page</span>
+└─ <span class="muted">no node_modules, no build/ ✶</span></pre>
+    </div>
+    <div>
+      <h3>Site identity — Configuration Service</h3>
+      <p class="dim" style="font-size:.95rem; margin-bottom:.6rem;">A separate Adobe service. Not in the repo. Authoritative for everything site-level:</p>
+      <ul class="airy" style="font-size:1rem;">
+        <li><strong>Folder mappings</strong> — URL prefix → content source <span class="muted">(replaces <code class="inline">fstab.yaml</code>)</span></li>
+        <li><strong>Indexing rules</strong> — what feeds <code class="inline">/sitemap.json</code>, lists, search <span class="muted">(replaces <code class="inline">helix-query.yaml</code>)</span></li>
+        <li><strong>Permissions</strong> — who can author, preview, publish</li>
+        <li><strong>Public / publish access</strong> — who can view what</li>
+        <li><strong>Storefront configuration</strong> — commerce endpoints, store views, environment IDs</li>
+      </ul>
+      <p class="muted" style="font-size:.85rem; margin-top:.8rem;">Older EDS docs still reference YAML config files in the repo — those have been superseded.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 9: PUBLISH PIPELINE -->
+<section class="slide" data-notes="The .aem.page vs .aem.live distinction is a CONTENT workflow signal, not a code one. .page shows in-progress content (drafts, unpublished); .live serves only what authors have promoted via Sidekick. Code is independent: the main branch is continuously synced and always live. Other branches are addressable at <branch>--<site>--<org>.aem.page or .aem.live — useful for code review and previewing changes before merging.">
+  <span class="eyebrow">Section 1 · Publish</span>
+  <h2>Two URL spaces — for content workflows</h2>
+  <div class="grid-2">
+    <div>
+      <div class="card" style="border-left:3px solid var(--var)">
+        <h3 style="color:var(--var)">.aem.page (preview)</h3>
+        <p style="color:var(--fg);">Author drafts + unpublished content. Authors and reviewers iterate here. Not crawled.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--accent); margin-top:.8rem;">
+        <h3 style="color:var(--accent)">.aem.live (publish)</h3>
+        <p style="color:var(--fg);">Edge-cached, indexed, public. Only pages an author has explicitly promoted via Sidekick.</p>
+      </div>
+      <p class="muted" style="margin-top:.8rem; font-size:.85rem;">The suffix is a <em>content</em> signal. Code follows a separate path → </p>
+    </div>
+    <div>
+      <h3>Sidekick</h3>
+      <p>Browser extension. Opens a toolbar on any preview/publish page with: <code class="inline">Edit</code> · <code class="inline">Preview</code> · <code class="inline">Publish</code> · <code class="inline">Unpublish</code>. The author's deploy button.</p>
+      <h3 style="margin-top:1.2rem;">Indexing</h3>
+      <p>Indexing rules live in the <strong>Configuration Service</strong> — what metadata to extract from each page (<code class="inline">title</code>, <code class="inline">description</code>, <code class="inline">og:image</code>, custom). Publish triggers re-index → <code class="inline">/sitemap.json</code>.</p>
+      <h3 style="margin-top:1.2rem;">Code branches</h3>
+      <p><code class="inline">main</code> is continuously synced and always live. Any other branch is reachable at <code class="inline">&lt;branch&gt;--&lt;site&gt;--&lt;org&gt;.aem.page</code> (or <code class="inline">.aem.live</code>) — handy for code review and feature previews.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 9: SECTION TRANSITION -->
+<section class="slide section-divider" data-notes="Quick transition. We've covered EDS as a stack — the authoring model, the runtime, the project shape. Now we shift to the second piece: dropins, the commerce UI components.">
+  <span class="eyebrow">Up next</span>
+  <p class="num">2</p>
+  <h1>Dropins</h1>
+  <p class="lead muted">Self-contained commerce UI components.</p>
+</section>
+
+<!-- ════════════════════════ SECTION 2: DROPINS ════════════════════════ -->
+
+<!-- SLIDE 11: WHAT IS A DROPIN -->
+<section class="slide" data-notes="A dropin is a self-contained UI component for one commerce job. Each dropin owns its API calls, its UI, its data model, its event surface. The host page boots the dropin, points it at a GraphQL endpoint, and gives it DOM containers to render into. Framework-agnostic at the boundary — internally it's Preact, but the host doesn't have to know.">
+  <span class="eyebrow">Section 2 · Dropins</span>
+  <h2>What is a dropin?</h2>
+  <p class="lead">A self-contained, framework-agnostic commerce UI component, distributed as an npm package, that renders into DOM containers on a host page and talks to Adobe Commerce over GraphQL.</p>
+  <div class="grid-3" style="margin-top:1.5rem;">
+    <div class="card"><h3>Self-contained</h3><p>Owns its API calls, its data model, its UI, its events. Drop it in; it works.</p></div>
+    <div class="card"><h3>Framework-agnostic at the edge</h3><p>Host page is plain HTML/JS. Internally Preact, but you never have to care.</p></div>
+    <div class="card"><h3>Composable</h3><p>Multiple dropins on one page. They share a global event bus, not a global state tree.</p></div>
+  </div>
+</section>
+
+<!-- SLIDE 12: DROPIN CATALOG -->
+<section class="slide" data-notes="A growing ecosystem. The top rows are the B2C core: PDP, Cart, Checkout, Auth, Account. Then merchandising: Recommendations, Wishlist, Product Discovery (which replaces the older storefront-search-dropin), Personalization. The bottom rows are the B2B layer — Purchase Order, Quote Management, Company Management, Quick Order, Requisition List — and the catalog keeps growing, which is what the fade is hinting at. Auth is special: it runs on every page because it owns the customer token the other dropins use.">
+  <span class="eyebrow">Section 2 · Catalog</span>
+  <h2>The dropin catalog</h2>
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:.85rem; mask-image:linear-gradient(to bottom, black 0%, black 60%, transparent 98%); -webkit-mask-image:linear-gradient(to bottom, black 0%, black 60%, transparent 98%);">
+    <div class="card"><h3>storefront-pdp</h3><p>Product Detail Page — gallery, options, pricing, add-to-cart.</p></div>
+    <div class="card"><h3>storefront-cart</h3><p>Cart, mini-cart, coupons, gift cards, shipping estimate.</p></div>
+    <div class="card"><h3>storefront-checkout</h3><p>Addresses, shipping methods, payment, order placement.</p></div>
+    <div class="card"><h3>storefront-auth</h3><p>Sign-in, sign-up, password reset. Owns the customer token.</p></div>
+
+    <div class="card"><h3>storefront-account</h3><p>Customer dashboard — profile, orders, returns, addresses.</p></div>
+    <div class="card"><h3>storefront-order</h3><p>Order status, history, line items.</p></div>
+    <div class="card"><h3>storefront-payment-services</h3><p>Adobe Commerce Payment Services UI — cards, wallets.</p></div>
+    <div class="card"><h3>storefront-recommendations</h3><p>Sensei-driven product recommendations.</p></div>
+
+    <div class="card"><h3>storefront-wishlist</h3><p>Saved-items list with toggles and counts.</p></div>
+    <div class="card"><h3>storefront-product-discovery</h3><p>Search, filtering, product browsing.</p></div>
+    <div class="card"><h3>storefront-personalization</h3><p>Audience targeting and personalized content.</p></div>
+    <div class="card"><h3>storefront-purchase-order</h3><p>B2B purchase orders and approval flows.</p></div>
+
+    <div class="card"><h3>storefront-quote-management</h3><p>B2B quote requests, negotiation, approval.</p></div>
+    <div class="card"><h3>storefront-company-management</h3><p>B2B company profiles, roles, teams.</p></div>
+    <div class="card"><h3>storefront-quick-order</h3><p>Multi-SKU quick reorder for B2B buyers.</p></div>
+    <div class="card"><h3>storefront-requisition-list</h3><p>Reusable B2B order lists.</p></div>
+  </div>
+</section>
+
+<!-- SLIDE 13: ANATOMY -->
+<section class="slide" data-notes="Three exports per dropin. api.js: the data layer — initialize, setEndpoint, getCartData, addProductsToCart, etc. render.js: a singleton render system that knows how to mount a Preact component into a DOM node. containers/: individual UI pieces (CartSummaryList, ProductPrice). The host calls render(Container, props)(domNode). Pre-compiled — no host-side bundler needed.">
+  <span class="eyebrow">Section 2 · Anatomy</span>
+  <h2>Inside a dropin</h2>
+  <div class="grid-2">
+    <div>
+      <pre class="code">@dropins/storefront-cart/
+├─ api.js               <span class="com">// data layer</span>
+│   ├─ <span class="fn">initialize</span>()
+│   ├─ <span class="fn">setEndpoint</span>(client)
+│   ├─ <span class="fn">getCartData</span>()
+│   └─ <span class="fn">addProductsToCart</span>(...)
+├─ render.js            <span class="com">// mount system</span>
+│   └─ <span class="kw">export const</span> render = ...
+└─ containers/
+    ├─ CartSummaryList.js
+    ├─ OrderSummary.js
+    ├─ EstimateShipping.js
+    ├─ Coupons.js
+    └─ MiniCart.js</pre>
+    </div>
+    <div>
+      <h3>The mount call</h3>
+      <pre class="code"><span class="kw">import</span> { render <span class="kw">as</span> provider }
+  <span class="kw">from</span> <span class="str">'@dropins/storefront-cart/render.js'</span>;
+<span class="kw">import</span> CartSummaryList
+  <span class="kw">from</span> <span class="str">'@dropins/storefront-cart/containers/CartSummaryList.js'</span>;
+
+provider.<span class="fn">render</span>(CartSummaryList, {
+  hideHeading: <span class="kw">false</span>,
+  routeProduct: createProductLink,
+})(<span class="var">domElement</span>);</pre>
+      <p class="dim" style="margin-top:1rem;">Two-step call: first configure the container, then mount it into a DOM element. The host page creates the empty slot; the dropin fills it with UI.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 14: ARCHITECTURE DIAGRAM -->
+<section class="slide" data-notes="Boot sequence: the host calls initializers.mountImmediately, which kicks the dropin's api.initialize(). The api fans out to two systems — GraphQL for data and the event bus for cross-dropin signaling. Containers subscribe to events and re-render when their data changes. Critical: dropins don't talk to each other directly. They speak through events.">
+  <span class="eyebrow">Section 2 · Architecture</span>
+  <h2>How a dropin runs</h2>
+  <svg class="diagram" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
+    <!-- Host -->
+    <rect class="box" x="40" y="30" width="1120" height="50" rx="6"/>
+    <text class="label" x="600" y="60" text-anchor="middle">Host page (EDS block, plain HTML, anything)</text>
+    <!-- Initializer -->
+    <rect class="box accent" x="40" y="120" width="280" height="80" rx="6"/>
+    <text class="label" x="180" y="150" text-anchor="middle">@dropins/tools</text>
+    <text class="sub" x="180" y="170" text-anchor="middle">initializer.mountImmediately</text>
+    <text class="sub" x="180" y="186" text-anchor="middle">→ api.initialize(config)</text>
+    <!-- Arrow down -->
+    <path class="arrow accent" d="M 180 80 L 180 120" marker-end="url(#a2)"/>
+    <!-- API -->
+    <rect class="box" x="380" y="120" width="220" height="80" rx="6"/>
+    <text class="label" x="490" y="150" text-anchor="middle">api.js</text>
+    <text class="sub" x="490" y="170" text-anchor="middle">setEndpoint, getCartData,</text>
+    <text class="sub" x="490" y="186" text-anchor="middle">addProductsToCart, ...</text>
+    <path class="arrow" d="M 320 160 L 380 160" marker-end="url(#a2)"/>
+    <!-- GraphQL -->
+    <rect class="box" x="660" y="120" width="220" height="80" rx="6"/>
+    <text class="label" x="770" y="150" text-anchor="middle">FetchGraphQL</text>
+    <text class="sub" x="770" y="170" text-anchor="middle">Adobe Commerce</text>
+    <text class="sub" x="770" y="186" text-anchor="middle">Catalog Service · Mesh</text>
+    <path class="arrow" d="M 600 160 L 660 160" marker-end="url(#a2)"/>
+    <!-- Event bus -->
+    <rect class="box" x="940" y="120" width="220" height="80" rx="6"/>
+    <text class="label" x="1050" y="150" text-anchor="middle">event-bus</text>
+    <text class="sub" x="1050" y="170" text-anchor="middle">events.emit('cart/data', ...)</text>
+    <text class="sub" x="1050" y="186" text-anchor="middle">events.on('authenticated', fn)</text>
+    <path class="arrow" d="M 880 160 L 940 160" marker-end="url(#a2)"/>
+    <!-- Containers -->
+    <rect class="box" x="380" y="270" width="220" height="80" rx="6"/>
+    <text class="label" x="490" y="300" text-anchor="middle">CartSummaryList</text>
+    <text class="sub" x="490" y="320" text-anchor="middle">Preact container</text>
+    <rect class="box" x="660" y="270" width="220" height="80" rx="6"/>
+    <text class="label" x="770" y="300" text-anchor="middle">OrderSummary</text>
+    <text class="sub" x="770" y="320" text-anchor="middle">Preact container</text>
+    <rect class="box" x="940" y="270" width="220" height="80" rx="6"/>
+    <text class="label" x="1050" y="300" text-anchor="middle">MiniCart</text>
+    <text class="sub" x="1050" y="320" text-anchor="middle">Preact container</text>
+    <!-- subscribe arrows -->
+    <path class="arrow" d="M 1050 200 Q 1050 235 600 240 L 490 270" marker-end="url(#a2)"/>
+    <path class="arrow" d="M 1050 200 L 770 270" marker-end="url(#a2)"/>
+    <path class="arrow" d="M 1050 200 L 1050 270" marker-end="url(#a2)"/>
+    <text class="sub" x="900" y="245" text-anchor="middle">subscribe + re-render on event</text>
+    <defs>
+      <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--fg-dim)"/></marker>
+    </defs>
+  </svg>
+</section>
+
+<!-- SLIDE 15: EVENT BUS -->
+<section class="slide" data-notes="The event bus is the integration surface. When the cart updates, the cart api emits 'cart/data'. Mini-cart in the header listens; it re-renders. The host page can also listen — for analytics, redirects, A/B tests. The event names are stable contract; the payloads are typed. Bonus: 'eager: true' replays the last value to late subscribers, which is huge for prerender / hydration.">
+  <span class="eyebrow">Section 2 · Events</span>
+  <h2>Decoupled by design — the event bus</h2>
+  <div class="grid-2">
+    <div>
+      <pre class="code"><span class="com">// inside the cart dropin's api</span>
+events.<span class="fn">emit</span>(<span class="str">'cart/data'</span>, cartModel);
+
+<span class="com">// inside the mini-cart container</span>
+events.<span class="fn">on</span>(<span class="str">'cart/data'</span>, (data) =&gt; {
+  setState(data);
+}, { eager: <span class="kw">true</span> });
+
+<span class="com">// inside the host page (analytics)</span>
+events.<span class="fn">on</span>(<span class="str">'addProductsToCart'</span>, (e) =&gt; {
+  <span class="var">window</span>.adobeDataLayer.push({
+    event: <span class="str">'addToCart'</span>, ...e,
+  });
+});</pre>
+    </div>
+    <div>
+      <h3>Common events</h3>
+      <ul class="airy">
+        <li><code class="inline">authenticated</code> — user signed in/out</li>
+        <li><code class="inline">cart/data</code> — cart contents changed</li>
+        <li><code class="inline">cart/initialized</code> — cart finished bootstrapping</li>
+        <li><code class="inline">pdp/data</code> — product loaded</li>
+        <li><code class="inline">checkout/order/placed</code></li>
+        <li><code class="inline">aem/lcp</code> — page hit LCP</li>
+      </ul>
+      <p class="dim" style="margin-top:1rem;"><strong>eager: true</strong> replays the last emitted value — perfect for components that mount after data already arrived.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 16: CUSTOMIZATION MODEL -->
+<section class="slide" data-notes="Three customization levers, in order of how much you should reach for them. Slots: pass JSX/Preact children into named regions. CSS variables and classNames: change colors, spacing, layout. Event hooks: react to dropin events from outside. What is NOT customizable: the GraphQL schema, event names, the data model. That's the contract. Stay inside it.">
+  <span class="eyebrow">Section 2 · Customization</span>
+  <h2>What you can change — and what you can't</h2>
+  <div class="grid-2">
+    <div>
+      <h3 style="color:var(--good)">Swappable</h3>
+      <ul class="airy">
+        <li><strong>Slots</strong> — every container exposes named slots; pass Preact children to override regions</li>
+        <li><strong>Design tokens</strong> — <code class="inline">--color-brand-*</code>, <code class="inline">--spacing-*</code> on a <code class="inline">.dropin-design</code> root</li>
+        <li><strong>className overrides</strong> — every container takes <code class="inline">HTMLAttributes</code></li>
+        <li><strong>Event hooks</strong> — react to anything via <code class="inline">events.on(...)</code></li>
+        <li><strong>Routing callbacks</strong> — <code class="inline">routeProduct: (sku) =&gt; '/...'</code></li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="color:var(--accent)">Fixed (the contract)</h3>
+      <ul class="airy">
+        <li><strong>GraphQL schema</strong> — what Commerce returns is what Commerce returns</li>
+        <li><strong>Event names &amp; payloads</strong> — break these and the ecosystem breaks</li>
+        <li><strong>Data model</strong> — TypeScript types exported from each dropin</li>
+        <li><strong>Lifecycle</strong> — initialize → mount → emit → re-render</li>
+      </ul>
+      <p class="dim" style="margin-top:1rem;">If you find yourself wanting to fork the contract, you probably want a different dropin or a custom block.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 17: TECH STACK -->
+<section class="slide" data-notes="What's actually inside the bundle. Preact for rendering — small, React-API compatible. Adobe-internal tooling: elsie for build, fetch-graphql for the network layer with caching headers, event-bus for pub/sub, storefront-design for the base CSS. Result: pre-compiled ES modules, ~30-50kb gzipped per dropin. Loaded via import maps so the host doesn't bundle them.">
+  <span class="eyebrow">Section 2 · Stack</span>
+  <h2>What's inside (so you know it's not magic)</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Runtime</h3>
+      <ul class="tight">
+        <li><strong>Preact</strong> — ~3kb React-compatible renderer</li>
+        <li><strong>preact/compat</strong> — bridge to React APIs</li>
+        <li>ES modules + import maps — no host bundler required</li>
+      </ul>
+      <h3 style="margin-top:1rem;">Adobe-internal</h3>
+      <ul class="tight">
+        <li><code class="inline">@adobe-commerce/elsie</code> — build &amp; storybook</li>
+        <li><code class="inline">@adobe-commerce/fetch-graphql</code> — header injection, cache hints</li>
+        <li><code class="inline">@adobe-commerce/event-bus</code> — pub/sub across dropins</li>
+        <li><code class="inline">@adobe-commerce/storefront-design</code> — base tokens &amp; CSS</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What this means for you</h3>
+      <ul class="airy">
+        <li>You don't install Preact — it ships with each dropin's tools bundle</li>
+        <li>You don't run a bundler — dropins arrive pre-built</li>
+        <li>You don't manage a render tree — each container hydrates itself</li>
+        <li>You <em>can</em> use Preact directly if you want to author custom slot content</li>
+      </ul>
+      <hr class="sep">
+      <p class="dim">The whole stack is designed so a content team without a frontend engineer can still ship.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 18: DISTRIBUTION -->
+<section class="slide" data-notes="Distribution and versioning. npm-published under @dropins. Each storefront pins explicit versions in package.json. The pattern: install with npm, then a postinstall script copies the built bundles into scripts/__dropins__/ where the EDS runtime can serve them. Import maps in head.html remap @dropins/foo/bar.js to /scripts/__dropins__/foo/bar.js. So the browser uses bare-specifier imports, edge serves them as static assets.">
+  <span class="eyebrow">Section 2 · Distribution</span>
+  <h2>How a host project consumes a dropin</h2>
+  <div class="grid-2">
+    <div>
+      <h3>1 · npm install</h3>
+      <pre class="code"><span class="com">// package.json</span>
+{
+  <span class="str">"dependencies"</span>: {
+    <span class="str">"@dropins/storefront-pdp"</span>: <span class="str">"3.0.2"</span>,
+    <span class="str">"@dropins/storefront-cart"</span>: <span class="str">"1.3.0"</span>,
+    <span class="str">"@dropins/storefront-checkout"</span>: <span class="str">"..."</span>,
+    <span class="str">"@dropins/tools"</span>: <span class="str">"..."</span>
+  }
+}</pre>
+      <h3 style="margin-top:1rem;">2 · postinstall</h3>
+      <pre class="code"><span class="com">// copies node_modules → scripts/__dropins__/</span>
+<span class="kw">node</span> postinstall.js</pre>
+    </div>
+    <div>
+      <h3>3 · import map in <code class="inline">head.html</code></h3>
+      <pre class="code"><span class="kw">&lt;script</span> <span class="var">type</span>=<span class="str">"importmap"</span><span class="kw">&gt;</span>
+{
+  <span class="str">"imports"</span>: {
+    <span class="str">"@dropins/storefront-pdp/"</span>:
+      <span class="str">"/scripts/__dropins__/storefront-pdp/"</span>,
+    <span class="str">"@dropins/storefront-cart/"</span>:
+      <span class="str">"/scripts/__dropins__/storefront-cart/"</span>
+    ...
+  }
+}
+<span class="kw">&lt;/script&gt;</span></pre>
+      <p class="dim" style="margin-top:1rem;">Browser sees <code class="inline">import { ... } from '@dropins/storefront-pdp/api.js'</code> and rewrites it to a real path on the edge. <strong>No bundler. No webpack. No vite.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ SECTION 3: COMING TOGETHER ════════════════════════ -->
+
+<!-- SLIDE 19: THREE-LAYER MODEL -->
+<section class="slide" data-notes="The mental model for the rest of the section. Three layers, each with one job. EDS layer: page lifecycle, blocks, sections. Commerce config layer: GraphQL clients, store identity, page-type detection. Dropin layer: actual UI components mounted into block-decorated DOM. The reference project, aem-boilerplate-commerce, is just stock EDS plus these two extra layers.">
+  <span class="eyebrow">Section 3 · The model</span>
+  <h2>Three layers stacked</h2>
+  <div class="layer-stack">
+    <div class="layer">
+      <h3>EDS Layer</h3>
+      <p>scripts/scripts.js · scripts/aem.js · blocks/* — page lifecycle, decorate, three-phase loading</p>
+    </div>
+    <div class="layer l2">
+      <h3>Commerce Config Layer</h3>
+      <p>scripts/commerce.js — FetchGraphQL clients (CORE + CS), endpoint config, page-type detection, header injection</p>
+    </div>
+    <div class="layer l3">
+      <h3>Dropin Layer</h3>
+      <p>scripts/initializers/* · @dropins/storefront-* — mounted by EDS blocks, talks to Commerce via the config layer</p>
+    </div>
+  </div>
+  <p class="dim" style="margin-top:2rem; text-align:center;">Each layer below the EDS layer is a thin wrapper. <code class="inline">aem-boilerplate-commerce</code> = stock <code class="inline">aem-boilerplate</code> + these two layers.</p>
+</section>
+
+<!-- SLIDE 20: PROJECT SHAPE DIFF -->
+<section class="slide" data-notes="What's added on top of stock boilerplate. 11 dropin npm dependencies. A postinstall script. scripts/__dropins__/ where the bundles live. scripts/commerce.js — the orchestrator. scripts/initializers/ — one file per dropin. blocks/ has commerce-prefixed blocks for each storefront page. Everything else (head.html, blocks/header, etc.) is recognizably stock EDS. Site config — including storefront endpoints — lives in the Configuration Service.">
+  <span class="eyebrow">Section 3 · Diff</span>
+  <h2>What <code class="inline" style="font-size:.7em;">aem-boilerplate-commerce</code> adds</h2>
+  <div class="grid-2">
+    <div>
+      <pre class="code">aem-boilerplate-commerce/
+├─ blocks/
+│  ├─ header/        <span class="muted">// (stock)</span>
+│  ├─ footer/        <span class="muted">// (stock)</span>
+│  <span class="hl">├─ commerce-cart/</span>
+│  <span class="hl">├─ commerce-checkout/</span>
+│  <span class="hl">├─ commerce-mini-cart/</span>
+│  <span class="hl">├─ commerce-login/</span>
+│  <span class="hl">├─ commerce-orders-list/</span>
+│  <span class="hl">├─ product-details/</span>
+│  <span class="hl">├─ product-list-page/</span>
+│  └─ ...
+├─ scripts/
+│  ├─ aem.js         <span class="muted">// (stock)</span>
+│  ├─ scripts.js     <span class="muted">// (stock-ish)</span>
+│  <span class="hl">├─ commerce.js</span>
+│  <span class="hl">├─ initializers/</span>
+│  <span class="hl">│   ├─ index.js  · auth.js</span>
+│  <span class="hl">│   ├─ cart.js   · pdp.js</span>
+│  <span class="hl">│   └─ checkout.js · ...</span>
+│  <span class="hl">└─ __dropins__/  // built bundles</span>
+├─ head.html         <span class="muted">// + import map + preload</span>
+<span class="hl">├─ postinstall.js   // copies bundles</span>
+└─ package.json      <span class="muted">// + 11 @dropins deps</span></pre>
+    </div>
+    <div>
+      <h3>The added pieces, in plain English</h3>
+      <ul class="airy">
+        <li><strong>11 npm deps</strong> for dropins + tools, pinned</li>
+        <li><strong><code class="inline">postinstall.js</code></strong> copies <code class="inline">node_modules/@dropins/*</code> → <code class="inline">scripts/__dropins__/</code></li>
+        <li><strong><code class="inline">scripts/commerce.js</code></strong> sets up GraphQL endpoints, headers, page detection</li>
+        <li><strong><code class="inline">scripts/initializers/</code></strong> one file per dropin — boots it once, hooks events</li>
+        <li><strong><code class="inline">blocks/commerce-*</code></strong> the bridge — each block mounts a dropin into EDS DOM</li>
+        <li><strong><code class="inline">head.html</code></strong> gains an importmap + a stack of <code class="inline">modulepreload</code></li>
+      </ul>
+      <p class="dim" style="margin-top:1rem;">Everything else is recognizably stock EDS.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 21: HEAD.HTML -->
+<section class="slide" data-notes="head.html is the integration backbone. The import map tells the browser that any import of '@dropins/storefront-cart/foo.js' actually means '/scripts/__dropins__/storefront-cart/foo.js'. The modulepreload tags warm the cache for things the runtime knows it's about to need. Three script tags load in order: aem.js (EDS runtime), scripts.js (EDS lifecycle), commerce.js (commerce orchestrator). All on a CSP nonce.">
+  <span class="eyebrow">Section 3 · head.html</span>
+  <h2>Wiring at the document head</h2>
+  <pre class="code" style="font-size:clamp(.72rem,.95vw,.88rem);"><span class="com">&lt;!-- 1. Import map: bare specifiers → local paths on the edge --&gt;</span>
+<span class="kw">&lt;script</span> <span class="var">nonce</span>=<span class="str">"aem"</span> <span class="var">type</span>=<span class="str">"importmap"</span><span class="kw">&gt;</span>
+{ <span class="str">"imports"</span>: {
+    <span class="str">"@dropins/storefront-account/"</span>:    <span class="str">"/scripts/__dropins__/storefront-account/"</span>,
+    <span class="str">"@dropins/storefront-auth/"</span>:       <span class="str">"/scripts/__dropins__/storefront-auth/"</span>,
+    <span class="str">"@dropins/storefront-cart/"</span>:       <span class="str">"/scripts/__dropins__/storefront-cart/"</span>,
+    <span class="str">"@dropins/storefront-checkout/"</span>:   <span class="str">"/scripts/__dropins__/storefront-checkout/"</span>,
+    <span class="str">"@dropins/storefront-pdp/"</span>:        <span class="str">"/scripts/__dropins__/storefront-pdp/"</span>,
+    <span class="com">/* + order, payment-services, recommendations, wishlist, personalization, product-discovery */</span>
+    <span class="str">"@dropins/tools/"</span>:                <span class="str">"/scripts/__dropins__/tools/"</span>
+}}
+<span class="kw">&lt;/script&gt;</span>
+
+<span class="com">&lt;!-- 2. Three scripts in order: EDS runtime → EDS lifecycle → commerce orchestrator --&gt;</span>
+<span class="hl"><span class="kw">&lt;script</span> <span class="var">nonce</span>=<span class="str">"aem"</span> <span class="var">src</span>=<span class="str">"/scripts/aem.js"</span> <span class="var">type</span>=<span class="str">"module"</span><span class="kw">&gt;&lt;/script&gt;</span></span>
+<span class="hl"><span class="kw">&lt;script</span> <span class="var">nonce</span>=<span class="str">"aem"</span> <span class="var">src</span>=<span class="str">"/scripts/scripts.js"</span> <span class="var">type</span>=<span class="str">"module"</span><span class="kw">&gt;&lt;/script&gt;</span></span>
+<span class="hl"><span class="kw">&lt;script</span> <span class="var">nonce</span>=<span class="str">"aem"</span> <span class="var">src</span>=<span class="str">"/scripts/commerce.js"</span> <span class="var">type</span>=<span class="str">"module"</span><span class="kw">&gt;&lt;/script&gt;</span></span>
+
+<span class="com">&lt;!-- 3. modulepreload — warm the cache for what the runtime is about to need --&gt;</span>
+<span class="kw">&lt;link</span> <span class="var">rel</span>=<span class="str">"modulepreload"</span> <span class="var">href</span>=<span class="str">"/scripts/initializers/index.js"</span><span class="kw">/&gt;</span>
+<span class="kw">&lt;link</span> <span class="var">rel</span>=<span class="str">"modulepreload"</span> <span class="var">href</span>=<span class="str">"/scripts/initializers/auth.js"</span><span class="kw">/&gt;</span>
+<span class="kw">&lt;link</span> <span class="var">rel</span>=<span class="str">"modulepreload"</span> <span class="var">href</span>=<span class="str">"/scripts/__dropins__/tools/event-bus.js"</span><span class="kw">/&gt;</span>
+<span class="kw">&lt;link</span> <span class="var">rel</span>=<span class="str">"modulepreload"</span> <span class="var">href</span>=<span class="str">"/scripts/__dropins__/tools/fetch-graphql.js"</span><span class="kw">/&gt;</span>
+<span class="kw">&lt;link</span> <span class="var">rel</span>=<span class="str">"modulepreload"</span> <span class="var">href</span>=<span class="str">"/scripts/__dropins__/tools/preact.js"</span><span class="kw">/&gt;</span></pre>
+</section>
+
+<!-- SLIDE 22: COMMERCE.JS -->
+<section class="slide" data-notes="commerce.js is the orchestrator. Two FetchGraphQL instances because we hit two endpoints with different headers — CORE for cart/auth/customer mutations, CS for catalog reads. Each gets endpoint + header config from the AEM config service. initializeCommerce runs eagerly, before any dropin renders, then hands off to initializeDropins which boots auth/cart/etc.">
+  <span class="eyebrow">Section 3 · commerce.js</span>
+  <h2>The commerce orchestrator</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Two GraphQL clients</h3>
+      <pre class="code"><span class="com">// scripts/commerce.js · lines 44–47</span>
+<span class="kw">export const</span> CORE_FETCH_GRAPHQL = <span class="kw">new</span> FetchGraphQL();
+<span class="kw">export const</span> CS_FETCH_GRAPHQL   = <span class="kw">new</span> FetchGraphQL();</pre>
+      <p class="dim" style="margin-top:.5rem;">CORE = customer / cart / auth mutations. CS (Catalog Service) = product reads. Different endpoints, different headers, different caching.</p>
+    </div>
+    <div>
+      <h3>initializeCommerce()</h3>
+      <pre class="code"><span class="com">// lines 325–338</span>
+<span class="kw">export async function</span> <span class="fn">initializeCommerce</span>() {
+  <span class="fn">initializeConfig</span>(<span class="kw">await</span> <span class="fn">getConfigFromSession</span>());
+
+  CORE_FETCH_GRAPHQL.<span class="fn">setEndpoint</span>(<span class="fn">getConfigValue</span>(<span class="str">'commerce-core-endpoint'</span>));
+  CORE_FETCH_GRAPHQL.<span class="fn">setFetchGraphQlHeaders</span>(
+    (prev) =&gt; ({ ...prev, ...<span class="fn">getHeaders</span>(<span class="str">'all'</span>) }));
+
+  CS_FETCH_GRAPHQL.<span class="fn">setEndpoint</span>(<span class="kw">await</span> <span class="fn">commerceEndpointWithQueryParams</span>());
+  CS_FETCH_GRAPHQL.<span class="fn">setFetchGraphQlHeaders</span>(
+    (prev) =&gt; ({ ...prev, ...<span class="fn">getHeaders</span>(<span class="str">'cs'</span>) }));
+
+  <span class="kw">return</span> <span class="fn">initializeDropins</span>();
+}</pre>
+    </div>
+  </div>
+  <p class="dim" style="margin-top:1rem; text-align:center;">Called from <code class="inline">loadEager()</code> in <code class="inline">scripts/scripts.js</code> before any block decorates. Headers picked up from EDS's site-config service: store view, customer group, environment ID, API key.</p>
+</section>
+
+<!-- SLIDE 23: INITIALIZERS -->
+<section class="slide" data-notes="initializers/index.js is the global hub. It wires events: when 'authenticated' fires, inject Bearer token into CORE. When 'auth/group-uid' fires, inject customer group into CS. Then it boots dropins in priority order — auth and personalization eagerly (await), cart lazily (no await — fire and forget). The prerenderingchange listener handles the case where the browser speculatively prerendered the page; we re-init on real navigation.">
+  <span class="eyebrow">Section 3 · initializers</span>
+  <h2>Registering dropins, in priority order</h2>
+  <div class="grid-2">
+    <div>
+      <h3>initializers/index.js (excerpt)</h3>
+      <pre class="code" style="font-size:.85rem;"><span class="com">// hooks: keep auth/group headers in sync</span>
+events.<span class="fn">on</span>(<span class="str">'auth/group-uid'</span>, setCustomerGroupHeader, { eager: <span class="kw">true</span> });
+events.<span class="fn">on</span>(<span class="str">'authenticated'</span>,  setAuthHeaders,         { eager: <span class="kw">true</span> });
+events.<span class="fn">on</span>(<span class="str">'cart/data'</span>,     persistCartDataInSession, { eager: <span class="kw">true</span> });
+
+<span class="com">// boot dropins</span>
+<span class="hl"><span class="kw">await</span> <span class="kw">import</span>(<span class="str">'./auth.js'</span>);            <span class="com">// eager — token for everyone</span></span>
+<span class="hl"><span class="kw">await</span> <span class="kw">import</span>(<span class="str">'./personalization.js'</span>);</span>
+<span class="hl"><span class="kw">import</span>(<span class="str">'./cart.js'</span>);                  <span class="com">// lazy — fire &amp; forget</span></span>
+
+events.<span class="fn">on</span>(<span class="str">'aem/lcp'</span>, <span class="kw">async</span> () =&gt; {
+  <span class="kw">await</span> <span class="kw">import</span>(<span class="str">'@dropins/tools/recaptcha.js'</span>).<span class="fn">then</span>(...);
+});
+
+<span class="com">// re-init on speculative prerender → real navigation</span>
+document.<span class="fn">addEventListener</span>(<span class="str">'prerenderingchange'</span>, initializeDropins,
+                            { once: <span class="kw">true</span> });</pre>
+    </div>
+    <div>
+      <h3>initializers/cart.js (full file)</h3>
+      <pre class="code" style="font-size:.88rem;"><span class="kw">import</span> { initializers } <span class="kw">from</span> <span class="str">'@dropins/tools/initializer.js'</span>;
+<span class="kw">import</span> { initialize, setEndpoint }
+  <span class="kw">from</span> <span class="str">'@dropins/storefront-cart/api.js'</span>;
+<span class="kw">import</span> { initializeDropin } <span class="kw">from</span> <span class="str">'./index.js'</span>;
+<span class="kw">import</span> { CORE_FETCH_GRAPHQL, fetchPlaceholders }
+  <span class="kw">from</span> <span class="str">'../commerce.js'</span>;
+
+<span class="kw">await</span> <span class="fn">initializeDropin</span>(<span class="kw">async</span> () =&gt; {
+  <span class="fn">setEndpoint</span>(CORE_FETCH_GRAPHQL);
+  <span class="kw">const</span> labels = <span class="kw">await</span> <span class="fn">fetchPlaceholders</span>(<span class="str">'placeholders/cart.json'</span>);
+
+  <span class="kw">return</span> initializers.<span class="fn">mountImmediately</span>(
+    initialize,
+    { langDefinitions: { default: { ...labels } } });
+})();</pre>
+      <p class="dim" style="margin-top:1rem;">Pattern repeats for every dropin: set endpoint, fetch placeholders (i18n), mount.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 24: BLOCK ↔ DROPIN MAPPING -->
+<section class="slide" data-notes="The bridge. Every commerce-prefixed block under blocks/ is a thin EDS wrapper around exactly one dropin. The block defines the DOM skeleton and the author-facing config; the dropin renders into it. Roughly 30 commerce blocks total. The author never sees 'dropin' — they see 'commerce-cart'. Engineers know the block is a 50-line file that imports a dropin.">
+  <span class="eyebrow">Section 3 · The bridge</span>
+  <h2>Blocks wrap dropins, 1:1</h2>
+  <table class="mapping">
+    <tr><th>EDS block</th><th></th><th>Dropin</th></tr>
+    <tr><td>blocks/product-details</td><td>→</td><td>@dropins/storefront-pdp</td></tr>
+    <tr><td>blocks/product-list-page</td><td>→</td><td>@dropins/storefront-product-discovery</td></tr>
+    <tr><td>blocks/commerce-cart</td><td>→</td><td>@dropins/storefront-cart</td></tr>
+    <tr><td>blocks/commerce-mini-cart</td><td>→</td><td>@dropins/storefront-cart (MiniCart)</td></tr>
+    <tr><td>blocks/commerce-checkout</td><td>→</td><td>@dropins/storefront-checkout</td></tr>
+    <tr><td>blocks/commerce-login · forgot-password · create-account</td><td>→</td><td>@dropins/storefront-auth</td></tr>
+    <tr><td>blocks/commerce-account-* · addresses · customer-information</td><td>→</td><td>@dropins/storefront-account</td></tr>
+    <tr><td>blocks/commerce-order-* · orders-list · returns-list</td><td>→</td><td>@dropins/storefront-order</td></tr>
+    <tr><td>blocks/commerce-wishlist</td><td>→</td><td>@dropins/storefront-wishlist</td></tr>
+    <tr><td>blocks/product-recommendations</td><td>→</td><td>@dropins/storefront-recommendations</td></tr>
+  </table>
+  <p class="dim" style="margin-top:1rem;">~30 commerce blocks ship with the boilerplate. Each is a thin wrapper — usually 50–200 lines.</p>
+</section>
+
+<!-- SLIDE 25: CODE WALKTHROUGH (THE CENTERPIECE) -->
+<section class="slide" data-notes="This is the pivotal slide. Five visible regions, color-coded. Imports — top — split into EDS imports (readBlockConfig from aem.js) and dropin imports (render, containers). Side-effect import of the cart initializer guarantees the dropin is booted before this block decorates. Inside decorate: read the author config, build the EDS skeleton with createContextualFragment, attach to block, then call provider.render(Container, props)(domElement) for each container. The block owns the DOM; the dropin owns what's inside the slots.">
+  <span class="eyebrow">Section 3 · Code walkthrough</span>
+  <h2>How a block mounts a dropin</h2>
+  <pre class="code" style="font-size:clamp(.74rem,.98vw,.92rem); max-height:62vh;"><span class="com">// blocks/commerce-cart/commerce-cart.js (excerpt — verbatim from the integration branch)</span>
+
+<span class="com">// ── 1. DROPIN imports — render system + containers ──────────────────────────</span>
+<span class="kw">import</span> { render <span class="kw">as</span> provider } <span class="kw">from</span> <span class="str">'@dropins/storefront-cart/render.js'</span>;
+<span class="kw">import</span> CartSummaryList <span class="kw">from</span> <span class="str">'@dropins/storefront-cart/containers/CartSummaryList.js'</span>;
+<span class="kw">import</span> OrderSummary    <span class="kw">from</span> <span class="str">'@dropins/storefront-cart/containers/OrderSummary.js'</span>;
+<span class="kw">import</span> EstimateShipping <span class="kw">from</span> <span class="str">'@dropins/storefront-cart/containers/EstimateShipping.js'</span>;
+<span class="kw">import</span> Coupons         <span class="kw">from</span> <span class="str">'@dropins/storefront-cart/containers/Coupons.js'</span>;
+
+<span class="com">// ── 2. SIDE-EFFECT import: boots the cart dropin once if it isn't already ──</span>
+<span class="kw">import</span> <span class="str">'../../scripts/initializers/cart.js'</span>;
+
+<span class="com">// ── 3. EDS imports — block-config reader, link helpers ─────────────────────</span>
+<span class="kw">import</span> { readBlockConfig } <span class="kw">from</span> <span class="str">'../../scripts/aem.js'</span>;
+<span class="kw">import</span> { fetchPlaceholders, rootLink, getProductLink } <span class="kw">from</span> <span class="str">'../../scripts/commerce.js'</span>;
+
+<span class="kw">export default async function</span> <span class="fn">decorate</span>(block) {
+  <span class="com">// ── 4. Read the author's config from the block's table ──────────────────</span>
+  <span class="kw">const</span> {
+    <span class="str">'hide-heading'</span>: hideHeading = <span class="str">'false'</span>,
+    <span class="str">'max-items'</span>: maxItems,
+    <span class="str">'enable-estimate-shipping'</span>: enableEstimateShipping = <span class="str">'false'</span>,
+    <span class="str">'checkout-url'</span>: checkoutURL = <span class="str">''</span>,
+  } = <span class="fn">readBlockConfig</span>(block);
+
+  <span class="com">// ── 5. Build the EDS-decorated DOM skeleton ─────────────────────────────</span>
+  <span class="kw">const</span> fragment = document.<span class="fn">createRange</span>().<span class="fn">createContextualFragment</span>(`
+    &lt;<span class="kw">div</span> <span class="var">class</span>=<span class="str">"cart__wrapper"</span>&gt;
+      &lt;<span class="kw">div</span> <span class="var">class</span>=<span class="str">"cart__list"</span>&gt;&lt;/<span class="kw">div</span>&gt;
+      &lt;<span class="kw">div</span> <span class="var">class</span>=<span class="str">"cart__order-summary"</span>&gt;&lt;/<span class="kw">div</span>&gt;
+    &lt;/<span class="kw">div</span>&gt;`);
+  <span class="kw">const</span> $list    = fragment.<span class="fn">querySelector</span>(<span class="str">'.cart__list'</span>);
+  <span class="kw">const</span> $summary = fragment.<span class="fn">querySelector</span>(<span class="str">'.cart__order-summary'</span>);
+  block.<span class="fn">appendChild</span>(fragment);
+
+  <span class="com">// ── 6. Mount each dropin container into its EDS slot ────────────────────</span>
+  <span class="kw">await</span> Promise.<span class="fn">all</span>([
+    <span class="hl">provider.<span class="fn">render</span>(CartSummaryList, { hideHeading: hideHeading === <span class="str">'true'</span>, maxItems })($list),</span>
+    <span class="hl">provider.<span class="fn">render</span>(OrderSummary,    { routeCheckout: () =&gt; checkoutURL    })($summary),</span>
+  ]);
+}</pre>
+</section>
+
+<!-- SLIDE 26: AUTHORING EXPERIENCE -->
+<section class="slide" data-notes="Pivot to the author's perspective. They don't see code; they see a block with named fields. The _commerce-cart.json schema controls what shows up — booleans become toggles, text becomes inputs. Edit-in-place. Save. The block re-renders. This is what makes commerce viable for a content team without a frontend engineer per page.">
+  <span class="eyebrow">Section 3 · Authoring</span>
+  <h2>What the author sees</h2>
+  <div class="grid-2">
+    <div>
+      <h3>The schema (_commerce-cart.json)</h3>
+      <pre class="code" style="font-size:.82rem;">{ <span class="str">"id"</span>: <span class="str">"commerce-cart"</span>,
+  <span class="str">"plugins"</span>: { <span class="str">"da"</span>: { <span class="str">"type"</span>: <span class="str">"key-value-block"</span> }},
+  <span class="str">"models"</span>: [{
+    <span class="str">"id"</span>: <span class="str">"commerce-cart"</span>,
+    <span class="str">"fields"</span>: [
+      { <span class="str">"component"</span>: <span class="str">"boolean"</span>, <span class="str">"name"</span>: <span class="str">"hide-heading"</span> },
+      { <span class="str">"component"</span>: <span class="str">"text"</span>,    <span class="str">"name"</span>: <span class="str">"max-items"</span> },
+      { <span class="str">"component"</span>: <span class="str">"boolean"</span>, <span class="str">"name"</span>: <span class="str">"enable-estimate-shipping"</span> },
+      { <span class="str">"component"</span>: <span class="str">"text"</span>,    <span class="str">"name"</span>: <span class="str">"checkout-url"</span> },
+      <span class="com">/* ... 6 more fields ... */</span>
+    ]
+  }]
+}</pre>
+    </div>
+    <div>
+      <h3>What the author edits in DA</h3>
+      <div class="da-mock">
+        <div class="da-head">▸ Commerce Cart</div>
+        <div class="da-row"><span class="k">Hide Heading</span><span class="v bool">false</span></div>
+        <div class="da-row"><span class="k">Max Items</span><span class="v">20</span></div>
+        <div class="da-row"><span class="k">Hide Attributes</span><span class="v">size,color</span></div>
+        <div class="da-row"><span class="k">Enable Item Quantity Update</span><span class="v bool">true</span></div>
+        <div class="da-row"><span class="k">Enable Item Remove</span><span class="v bool">true</span></div>
+        <div class="da-row"><span class="k">Enable Estimate Shipping</span><span class="v bool">true</span></div>
+        <div class="da-row"><span class="k">Start Shopping URL</span><span class="v">/shop</span></div>
+        <div class="da-row"><span class="k">Checkout URL</span><span class="v">/checkout</span></div>
+      </div>
+      <p class="dim" style="margin-top:1rem;">Author toggles fields → block re-renders → published page reflects the change. No engineer in the loop.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 27: ROUTING & PAGE DETECTION -->
+<section class="slide" data-notes="How does a URL like /products/amazing-jacket/SKU-123 work? The page itself is a generic 'product details' template. EDS serves it; the product-details block sits in the DOM as a marker. commerce.js sees that marker, calls detectPageType which returns 'Product', then handleCommercePageType eagerly imports the pdp initializer. getProductSku reads the SKU from page metadata or the URL. The pages themselves can be prerendered — there's a separate aem-commerce-prerender service that emits one HTML page per product.">
+  <span class="eyebrow">Section 3 · Routing</span>
+  <h2>How a URL becomes a product page</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Page-type detection</h3>
+      <pre class="code"><span class="com">// commerce.js · lines 156–167</span>
+<span class="kw">function</span> <span class="fn">detectPageType</span>() {
+  <span class="kw">if</span> (document.body.<span class="fn">querySelector</span>(<span class="str">'main .product-details'</span>))
+    <span class="kw">return</span> <span class="str">'Product'</span>;
+  <span class="kw">if</span> (document.body.<span class="fn">querySelector</span>(<span class="str">'main .product-list-page'</span>))
+    <span class="kw">return</span> <span class="str">'Category'</span>;
+  <span class="kw">if</span> (document.body.<span class="fn">querySelector</span>(<span class="str">'main .commerce-cart'</span>))
+    <span class="kw">return</span> <span class="str">'Cart'</span>;
+  <span class="kw">if</span> (document.body.<span class="fn">querySelector</span>(<span class="str">'main .commerce-checkout'</span>))
+    <span class="kw">return</span> <span class="str">'Checkout'</span>;
+  <span class="kw">return</span> <span class="str">'CMS'</span>;
+}</pre>
+      <p class="dim" style="margin-top:.6rem;">No router. The DOM is the route — the block on the page tells the runtime what kind of page it is.</p>
+    </div>
+    <div>
+      <h3>SKU resolution</h3>
+      <pre class="code"><span class="com">// commerce.js · lines 684–690</span>
+<span class="kw">export function</span> <span class="fn">getProductSku</span>() {
+  <span class="kw">if</span> (<span class="fn">isProductTemplate</span>() &amp;&amp; (IS_UE || IS_DA)) {
+    <span class="kw">return</span> <span class="fn">getDefaultSkuFromBlock</span>();  <span class="com">// edit modes</span>
+  }
+  <span class="kw">return</span> <span class="fn">getMetadata</span>(<span class="str">'sku'</span>) <span class="com">// from page meta</span>
+      || <span class="fn">getSkuFromUrl</span>();           <span class="com">// from /products/...path</span>
+}</pre>
+      <h3 style="margin-top:1rem;">Prerender</h3>
+      <p>For SEO + LCP, a sister service (<code class="inline">aem-commerce-prerender</code>) generates one static HTML page per SKU and pushes them to the edge. The runtime above is the same; the page is just already-rendered.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 28: LOADING PHASES APPLIED -->
+<section class="slide" data-notes="Same three-phase diagram from slide 6, now annotated with what each commerce piece does in each phase. Eager: initialize commerce config, boot auth, on Product pages boot pdp. Lazy: cart initializer fires (no await), commerce events SDK loads, lazy-styles. Delayed: analytics, RUM beacons, reCAPTCHA. The dropins themselves are dynamic imports — they only load on pages that use them.">
+  <span class="eyebrow">Section 3 · Phases applied</span>
+  <h2>What loads when, in commerce</h2>
+  <svg class="diagram" viewBox="0 0 1200 360" xmlns="http://www.w3.org/2000/svg" style="max-height:55vh;">
+    <line class="arrow" x1="60" y1="180" x2="1140" y2="180" marker-end="url(#tarr2)"/>
+
+    <!-- Eager -->
+    <rect class="box accent" x="60" y="80" width="320" height="220" rx="6"/>
+    <text class="label" x="220" y="110" text-anchor="middle">loadEager (scripts.js)</text>
+    <text class="sub" x="220" y="140" text-anchor="middle" style="fill:var(--accent-soft); font-weight:600;">→ initializeCommerce()</text>
+    <text class="sub" x="220" y="160" text-anchor="middle">  · CORE + CS endpoints set</text>
+    <text class="sub" x="220" y="178" text-anchor="middle">  · headers injected</text>
+    <text class="sub" x="220" y="200" text-anchor="middle" style="fill:var(--accent-soft); font-weight:600;">→ initializeDropins()</text>
+    <text class="sub" x="220" y="220" text-anchor="middle">  · auth.js (await)</text>
+    <text class="sub" x="220" y="238" text-anchor="middle">  · personalization.js (await)</text>
+    <text class="sub" x="220" y="260" text-anchor="middle" style="fill:var(--accent-soft); font-weight:600;">→ loadCommerceEager()</text>
+    <text class="sub" x="220" y="280" text-anchor="middle">  · if Product → pdp.js</text>
+
+    <!-- LCP -->
+    <line x1="385" y1="50" x2="385" y2="320" stroke="var(--good)" stroke-width="2" stroke-dasharray="4 3"/>
+    <text x="392" y="65" style="fill:var(--good); font-family:var(--sans); font-size:13px; font-weight:600;">LCP</text>
+
+    <!-- Lazy -->
+    <rect class="box" x="400" y="80" width="380" height="220" rx="6"/>
+    <text class="label" x="590" y="110" text-anchor="middle">loadLazy</text>
+    <text class="sub" x="590" y="140" text-anchor="middle" style="fill:var(--var); font-weight:600;">→ initializers/cart.js</text>
+    <text class="sub" x="590" y="158" text-anchor="middle">  · fire &amp; forget (no await)</text>
+    <text class="sub" x="590" y="180" text-anchor="middle" style="fill:var(--var); font-weight:600;">→ loadCommerceLazy()</text>
+    <text class="sub" x="590" y="200" text-anchor="middle">  · ACDL / event SDK</text>
+    <text class="sub" x="590" y="218" text-anchor="middle">  · modal · wishlist · history</text>
+    <text class="sub" x="590" y="240" text-anchor="middle" style="fill:var(--var); font-weight:600;">→ events.on('aem/lcp', ...)</text>
+    <text class="sub" x="590" y="258" text-anchor="middle">  · recaptcha after LCP fires</text>
+    <text class="sub" x="590" y="280" text-anchor="middle">→ lazy-styles.css · fonts.css</text>
+
+    <!-- Delayed -->
+    <rect class="box" x="800" y="80" width="340" height="220" rx="6"/>
+    <text class="label" x="970" y="110" text-anchor="middle">loadDelayed (+3000ms)</text>
+    <text class="sub" x="970" y="150" text-anchor="middle">→ analytics</text>
+    <text class="sub" x="970" y="170" text-anchor="middle">→ third-party tags</text>
+    <text class="sub" x="970" y="190" text-anchor="middle">→ RUM beacons</text>
+    <text class="sub" x="970" y="220" text-anchor="middle" style="fill:var(--fg-mute); font-style:italic;">"if it doesn't help</text>
+    <text class="sub" x="970" y="238" text-anchor="middle" style="fill:var(--fg-mute); font-style:italic;">  the user, defer it"</text>
+
+    <defs>
+      <marker id="tarr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--fg-dim)"/></marker>
+    </defs>
+  </svg>
+  <p class="dim" style="margin-top:.4rem; text-align:center;">PDP, cart, checkout dropins are <strong>dynamic imports</strong> — they only load on pages that use them.</p>
+</section>
+
+<!-- ════════════════════════ CLOSE ════════════════════════ -->
+
+<!-- SLIDE 29: RECAP -->
+<section class="slide" data-notes="One sentence per section. EDS: edge-served pages authored in documents, no build, perf-first. Dropins: composable commerce UI components, GraphQL-backed, framework-agnostic at the boundary, communicating via an event bus. Together: blocks decorate DOM, mount dropins into it. The boilerplate is 2 thin layers on top of stock EDS. End. That's the whole picture.">
+  <span class="eyebrow">Recap</span>
+  <h2>Three takeaways</h2>
+  <div class="layer-stack" style="margin-top:2rem;">
+    <div class="layer">
+      <h3>EDS</h3>
+      <p>Edge-served, document-authored, vanilla-JS pages. No build. Perf budget is the product.</p>
+    </div>
+    <div class="layer l2">
+      <h3>Dropins</h3>
+      <p>Composable commerce UI components. GraphQL-backed. Framework-agnostic at the boundary. Decoupled via an event bus.</p>
+    </div>
+    <div class="layer l3">
+      <h3>Together</h3>
+      <p>EDS blocks decorate DOM and mount dropins into it. The boilerplate is two thin layers on top of stock EDS — config + initializers.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 30: Q&A -->
+<section class="slide qa-slide" data-notes="Open questions. Common ones to expect: 'how do we customize a dropin beyond slots?' (event hooks first, then slot content, then a custom block); 'can we mix dropins with our own React app?' (yes — they're framework-agnostic at the boundary); 'what about SEO?' (prerender service generates one static HTML per SKU); 'multi-store?' (config service per store view).">
+  <h1>?</h1>
+  <p>Stephen Rugh · rugh@adobe.com</p>
+  <p style="margin-top:2rem;"><span class="pill">EDS docs · aem.live</span> <span class="pill">Storefront docs · experienceleague.adobe.com</span> <span class="pill">Boilerplate · github.com/hlxsites/aem-boilerplate-commerce</span></p>
+</section>
+
+</main>
+
+<aside id="notes" hidden><span class="label">Notes</span><p id="notes-text"></p></aside>
+<footer id="hud"><span id="counter">1 / 30</span></footer>
+<div id="help" hidden><div class="panel">
+  <h3 style="color:var(--accent-soft); margin-top:0;">Keyboard</h3>
+  <table>
+    <tr><td><kbd>→</kbd> <kbd>↓</kbd> <kbd>Space</kbd></td><td>Next slide</td></tr>
+    <tr><td><kbd>←</kbd> <kbd>↑</kbd></td><td>Previous slide</td></tr>
+    <tr><td><kbd>Home</kbd> · <kbd>End</kbd></td><td>First / last slide</td></tr>
+    <tr><td><kbd>N</kbd></td><td>Toggle speaker notes</td></tr>
+    <tr><td><kbd>?</kbd></td><td>Show / hide this help</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Close help / notes</td></tr>
+  </table>
+  <p class="dim" style="margin-top:1rem; font-size:.9rem;">URL hash <code class="inline">#15</code> jumps to slide 15.</p>
+</div></div>
+
+<script>
+(function () {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  const notes = document.getElementById('notes');
+  const notesText = document.getElementById('notes-text');
+  const hud = document.getElementById('hud');
+  const help = document.getElementById('help');
+  let current = 0;
+
+  function show(i, replace) {
+    i = Math.max(0, Math.min(total - 1, i));
+    slides[current].classList.remove('active');
+    slides[i].classList.add('active');
+    current = i;
+    counter.textContent = (i + 1) + ' / ' + total;
+    notesText.textContent = slides[i].getAttribute('data-notes') || '';
+    const hash = '#' + (i + 1);
+    if (replace) history.replaceState(null, '', hash);
+    else if (location.hash !== hash) history.pushState(null, '', hash);
+  }
+
+  function toggleNotes() {
+    notes.hidden = !notes.hidden;
+    hud.classList.toggle('with-notes', !notes.hidden);
+  }
+
+  function toggleHelp() {
+    help.hidden = !help.hidden;
+  }
+
+  function fromHash() {
+    const m = /^#(\d+)$/.exec(location.hash);
+    return m ? parseInt(m[1], 10) - 1 : 0;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    switch (e.key) {
+      case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown':
+        show(current + 1); e.preventDefault(); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+        show(current - 1); e.preventDefault(); break;
+      case 'Home': show(0); e.preventDefault(); break;
+      case 'End': show(total - 1); e.preventDefault(); break;
+      case 'n': case 'N': toggleNotes(); break;
+      case '?': toggleHelp(); break;
+      case 'Escape':
+        if (!help.hidden) toggleHelp();
+        else if (!notes.hidden) toggleNotes();
+        break;
+    }
+  });
+
+  window.addEventListener('hashchange', () => show(fromHash(), true));
+  show(fromHash(), true);
+})();
+</script>
+</body>
+</html>
