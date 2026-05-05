@@ -72,7 +72,7 @@
   pre.code .com { color: var(--com); font-style: italic; }
   pre.code .fn { color: var(--fn); }
   pre.code .var { color: var(--var); }
-  pre.code .hl { background: rgba(255,59,48,.14); border-left: 3px solid var(--accent); display: block; margin: 0 -1.25rem; padding: 0 1.25rem; }
+  pre.code .hl { background: rgba(255,59,48,.14); border-left: 3px solid var(--accent); padding: 0 .5em 0 .35em; margin-left: -.35em; border-radius: 0 3px 3px 0; }
   code.inline { font-family: var(--code); background: var(--bg-3); padding: 0.08em 0.4em; border-radius: 4px; font-size: 0.92em; color: var(--str); }
 
   /* Layout helpers */
@@ -85,7 +85,8 @@
   .card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem 1.25rem; }
   .card h3 { margin-top: 0; }
   .card p { font-size: clamp(.88rem, 1.15vw, 1rem); margin: 0; color: var(--fg-dim); }
-  .pill { display: inline-block; background: var(--bg-3); color: var(--fg-dim); padding: .15em .65em; border-radius: 999px; font-size: .8em; border: 1px solid var(--line); margin-right: .35em; }
+  .pill { display: inline-block; background: var(--bg-3); color: var(--fg-dim); padding: .15em .65em; border-radius: 999px; font-size: .8em; border: 1px solid var(--line); margin-right: .35em; transition: color 150ms ease, border-color 150ms ease; }
+  a.pill:hover { color: var(--accent-soft); border-color: rgba(255,59,48,.5); }
   .pill.accent { background: rgba(255,59,48,.12); border-color: rgba(255,59,48,.4); color: var(--accent-soft); }
 
   /* Diagrams */
@@ -122,6 +123,51 @@
   #notes[hidden] { display: none; }
   #notes .label { color: var(--accent); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: .72rem; margin-right: .5em; }
   #notes p { margin: .25em 0; font-size: .95rem; color: var(--fg); }
+
+  /* Eject button */
+  #eject-wrap { position: fixed; left: 1rem; bottom: 1rem; z-index: 40; }
+  #eject {
+    width: 36px; height: 36px;
+    background: rgba(22,27,34,.7); border: 1px solid var(--line);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--fg-mute);
+    transition: color 150ms ease, border-color 150ms ease, transform 200ms ease;
+    padding: 0;
+  }
+  #eject:hover, #eject.open { color: var(--accent); border-color: rgba(255,59,48,.5); }
+  #eject:hover { transform: translateY(-2px); }
+  #eject svg { width: 22px; height: 22px; }
+  #eject-menu {
+    position: absolute; bottom: calc(100% + .5rem); left: 0;
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 8px; padding: .35rem;
+    min-width: 240px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    display: none;
+  }
+  #eject-menu.open { display: block; }
+  #eject-menu .label { display: block; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); padding: .35rem .6rem .15rem; }
+  #eject-menu a {
+    display: block; padding: .55rem .6rem;
+    color: var(--fg); font-size: .92rem;
+    border-radius: 5px; text-decoration: none;
+    transition: background 100ms ease, color 100ms ease;
+  }
+  #eject-menu a:hover { background: var(--bg-3); color: var(--accent-soft); }
+  #eject-menu a .sub { display: block; font-size: .72rem; color: var(--fg-mute); font-family: var(--code); margin-top: .15em; word-break: break-all; }
+
+  /* Progress indicator */
+  #progress {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    height: 3px; background: transparent;
+    z-index: 30; pointer-events: none;
+  }
+  #progress-bar {
+    height: 100%; width: 0;
+    background: rgba(255,59,48,.32);
+    transition: width 220ms ease;
+  }
 
   /* HUD */
   #hud {
@@ -353,10 +399,8 @@
     <text class="sub" x="950" y="156" text-anchor="middle">analytics · third-party · RUM beacons</text>
 
     <!-- ticks -->
-    <line x1="60" y1="155" x2="60" y2="175" stroke="var(--fg-dim)"/>
     <line x1="345" y1="155" x2="345" y2="175" stroke="var(--good)" stroke-width="2"/>
     <line x1="745" y1="155" x2="745" y2="175" stroke="var(--fg-dim)"/>
-    <text class="sub" x="345" y="200" text-anchor="middle">~LCP</text>
     <text class="sub" x="745" y="200" text-anchor="middle">+3000ms</text>
 
     <defs>
@@ -519,7 +563,7 @@ provider.<span class="fn">render</span>(CartSummaryList, {
 </section>
 
 <!-- SLIDE 14: ARCHITECTURE DIAGRAM -->
-<section class="slide" data-notes="Boot sequence: the host calls initializers.mountImmediately, which kicks the dropin's api.initialize(). The api fans out to two systems — GraphQL for data and the event bus for cross-dropin signaling. Containers subscribe to events and re-render when their data changes. Critical: dropins don't talk to each other directly. They speak through events.">
+<section class="slide" data-notes="Boot sequence: the block decorator calls initializers.mountImmediately, which kicks the dropin's api.initialize(). The api fans out to two systems — GraphQL for data and the event bus for cross-dropin signaling. Calls go straight from the shopper's browser to Commerce + Commerce Services (Catalog, Live Search, Recommendations); EDS doesn't proxy. Containers subscribe to events and re-render when their data changes. Critical: dropins don't talk to each other directly — they speak through events.">
   <span class="eyebrow">Section 2 · Architecture</span>
   <h2>How a dropin runs</h2>
   <svg class="diagram" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
@@ -542,8 +586,8 @@ provider.<span class="fn">render</span>(CartSummaryList, {
     <!-- GraphQL -->
     <rect class="box" x="660" y="120" width="220" height="80" rx="6"/>
     <text class="label" x="770" y="150" text-anchor="middle">FetchGraphQL</text>
-    <text class="sub" x="770" y="170" text-anchor="middle">Adobe Commerce</text>
-    <text class="sub" x="770" y="186" text-anchor="middle">Catalog Service · Mesh</text>
+    <text class="sub" x="770" y="170" text-anchor="middle">Core Commerce + Services</text>
+    <text class="sub" x="770" y="186" text-anchor="middle">Catalog · Live Search · Recs</text>
     <path class="arrow" d="M 600 160 L 660 160" marker-end="url(#a2)"/>
     <!-- Event bus -->
     <rect class="box" x="940" y="120" width="220" height="80" rx="6"/>
@@ -609,29 +653,34 @@ events.<span class="fn">on</span>(<span class="str">'addProductsToCart'</span>, 
 </section>
 
 <!-- SLIDE 16: CUSTOMIZATION MODEL -->
-<section class="slide" data-notes="Three customization levers, in order of how much you should reach for them. Slots: pass JSX/Preact children into named regions. CSS variables and classNames: change colors, spacing, layout. Event hooks: react to dropin events from outside. What is NOT customizable: the GraphQL schema, event names, the data model. That's the contract. Stay inside it.">
+<section class="slide" data-notes="Almost everything is extensible. UI: slots, design tokens, event hooks. Data: each dropin ships a baseline GraphQL schema, but you can extend the fragments via build.mjs (add fields, skip fragments), stitch in your own schema via Commerce GraphQL extensibility, or fire secondary queries at runtime — often piggybacking off dropin events or rendering inside slots. The two things each dropin owns and documents: its event names and its lifecycle — so other components (and your code) can rely on them. Extension docs: experienceleague.adobe.com/.../dropins/all/extending/.">
   <span class="eyebrow">Section 2 · Customization</span>
-  <h2>What you can change — and what you can't</h2>
+  <h2>What you can change — and the small contract you can't</h2>
   <div class="grid-2">
     <div>
-      <h3 style="color:var(--good)">Swappable</h3>
-      <ul class="airy">
-        <li><strong>Slots</strong> — every container exposes named slots; pass Preact children to override regions</li>
-        <li><strong>Design tokens</strong> — <code class="inline">--color-brand-*</code>, <code class="inline">--spacing-*</code> on a <code class="inline">.dropin-design</code> root</li>
-        <li><strong>className overrides</strong> — every container takes <code class="inline">HTMLAttributes</code></li>
-        <li><strong>Event hooks</strong> — react to anything via <code class="inline">events.on(...)</code></li>
-        <li><strong>Routing callbacks</strong> — <code class="inline">routeProduct: (sku) =&gt; '/...'</code></li>
+      <h3 style="color:var(--good)">Extensible</h3>
+      <h3 class="muted" style="font-size:.85rem; margin-top:0; letter-spacing:.1em;">UI</h3>
+      <ul class="tight">
+        <li><strong>Slots</strong> — every container exposes named slots; replace or extend any region</li>
+        <li><strong>Design tokens</strong> — <code class="inline">--color-brand-*</code>, <code class="inline">--spacing-*</code></li>
+        <li><strong>className overrides</strong> via <code class="inline">HTMLAttributes</code></li>
+        <li><strong>Event hooks</strong> — react via <code class="inline">events.on(...)</code></li>
+      </ul>
+      <h3 class="muted" style="font-size:.85rem; margin-top:.7rem; letter-spacing:.1em;">Data</h3>
+      <ul class="tight">
+        <li><strong>GraphQL fragments</strong> — extend the baseline schema via <code class="inline">build.mjs</code> (add fields, skip fragments)</li>
+        <li><strong>Schema stitching / merging</strong> — bring your own custom schema in via Commerce GraphQL extensibility</li>
+        <li><strong>Secondary queries at runtime</strong> — piggyback off dropin events, or fetch inside Slots</li>
       </ul>
     </div>
     <div>
-      <h3 style="color:var(--accent)">Fixed (the contract)</h3>
+      <h3 style="color:var(--accent)">Owned by the dropin</h3>
       <ul class="airy">
-        <li><strong>GraphQL schema</strong> — what Commerce returns is what Commerce returns</li>
-        <li><strong>Event names &amp; payloads</strong> — break these and the ecosystem breaks</li>
-        <li><strong>Data model</strong> — TypeScript types exported from each dropin</li>
+        <li><strong>Event names &amp; payloads</strong> — each dropin defines and documents these so others can rely on them</li>
         <li><strong>Lifecycle</strong> — initialize → mount → emit → re-render</li>
       </ul>
-      <p class="dim" style="margin-top:1rem;">If you find yourself wanting to fork the contract, you probably want a different dropin or a custom block.</p>
+      <hr class="sep">
+      <p class="dim">Underneath, dropins are just a layer on top of EDS — they shoulder a lot of UI and integration work for you. You're always free to build the same functionality yourself with plain JS and HTML in a block.</p>
     </div>
   </div>
 </section>
@@ -710,6 +759,14 @@ events.<span class="fn">on</span>(<span class="str">'addProductsToCart'</span>, 
 
 <!-- ════════════════════════ SECTION 3: COMING TOGETHER ════════════════════════ -->
 
+<!-- SLIDE 18: SECTION 3 TRANSITION -->
+<section class="slide section-divider" data-notes="We've covered EDS as a platform and dropins as self-contained UI components. Now the third act: how they plug together in the aem-boilerplate-commerce reference project — blocks, initializers, import maps, and the wiring that makes it all run.">
+  <span class="eyebrow">Up next</span>
+  <p class="num">3</p>
+  <h1>How they<br>come together</h1>
+  <p class="lead muted">EDS blocks mounting dropins into edge-served pages.</p>
+</section>
+
 <!-- SLIDE 19: THREE-LAYER MODEL -->
 <section class="slide" data-notes="The mental model for the rest of the section. Three layers, each with one job. EDS layer: page lifecycle, blocks, sections. Commerce config layer: GraphQL clients, store identity, page-type detection. Dropin layer: actual UI components mounted into block-decorated DOM. The reference project, aem-boilerplate-commerce, is just stock EDS plus these two extra layers.">
   <span class="eyebrow">Section 3 · The model</span>
@@ -741,25 +798,19 @@ events.<span class="fn">on</span>(<span class="str">'addProductsToCart'</span>, 
 ├─ blocks/
 │  ├─ header/        <span class="muted">// (stock)</span>
 │  ├─ footer/        <span class="muted">// (stock)</span>
-│  <span class="hl">├─ commerce-cart/</span>
-│  <span class="hl">├─ commerce-checkout/</span>
-│  <span class="hl">├─ commerce-mini-cart/</span>
-│  <span class="hl">├─ commerce-login/</span>
-│  <span class="hl">├─ commerce-orders-list/</span>
-│  <span class="hl">├─ product-details/</span>
-│  <span class="hl">├─ product-list-page/</span>
+<span class="hl">│  ├─ commerce-cart/      · commerce-checkout/</span>
+<span class="hl">│  ├─ commerce-mini-cart/ · commerce-login/</span>
+<span class="hl">│  ├─ commerce-orders-list/</span>
+<span class="hl">│  ├─ product-details/    · product-list-page/</span>
 │  └─ ...
 ├─ scripts/
 │  ├─ aem.js         <span class="muted">// (stock)</span>
 │  ├─ scripts.js     <span class="muted">// (stock-ish)</span>
-│  <span class="hl">├─ commerce.js</span>
-│  <span class="hl">├─ initializers/</span>
-│  <span class="hl">│   ├─ index.js  · auth.js</span>
-│  <span class="hl">│   ├─ cart.js   · pdp.js</span>
-│  <span class="hl">│   └─ checkout.js · ...</span>
-│  <span class="hl">└─ __dropins__/  // built bundles</span>
+<span class="hl">│  ├─ commerce.js         <span class="com">// orchestrator</span></span>
+<span class="hl">│  ├─ initializers/       <span class="com">// one file / dropin</span></span>
+<span class="hl">│  └─ __dropins__/        <span class="com">// built bundles</span></span>
 ├─ head.html         <span class="muted">// + import map + preload</span>
-<span class="hl">├─ postinstall.js   // copies bundles</span>
+<span class="hl">├─ postinstall.js    <span class="com">// copies bundles</span></span>
 └─ package.json      <span class="muted">// + 11 @dropins deps</span></pre>
     </div>
     <div>
@@ -814,24 +865,26 @@ events.<span class="fn">on</span>(<span class="str">'addProductsToCart'</span>, 
   <div class="grid-2">
     <div>
       <h3>Two GraphQL clients</h3>
-      <pre class="code"><span class="com">// scripts/commerce.js · lines 44–47</span>
+      <pre class="code"><span class="com">// scripts/commerce.js</span>
 <span class="kw">export const</span> CORE_FETCH_GRAPHQL = <span class="kw">new</span> FetchGraphQL();
 <span class="kw">export const</span> CS_FETCH_GRAPHQL   = <span class="kw">new</span> FetchGraphQL();</pre>
       <p class="dim" style="margin-top:.5rem;">CORE = customer / cart / auth mutations. CS (Catalog Service) = product reads. Different endpoints, different headers, different caching.</p>
     </div>
     <div>
       <h3>initializeCommerce()</h3>
-      <pre class="code"><span class="com">// lines 325–338</span>
-<span class="kw">export async function</span> <span class="fn">initializeCommerce</span>() {
+      <pre class="code"><span class="kw">export async function</span> <span class="fn">initializeCommerce</span>() {
+  <span class="com">// Initialize Config</span>
   <span class="fn">initializeConfig</span>(<span class="kw">await</span> <span class="fn">getConfigFromSession</span>());
 
-  CORE_FETCH_GRAPHQL.<span class="fn">setEndpoint</span>(<span class="fn">getConfigValue</span>(<span class="str">'commerce-core-endpoint'</span>));
-  CORE_FETCH_GRAPHQL.<span class="fn">setFetchGraphQlHeaders</span>(
-    (prev) =&gt; ({ ...prev, ...<span class="fn">getHeaders</span>(<span class="str">'all'</span>) }));
+  <span class="com">// Set Fetch GraphQL (Core)</span>
+  CORE_FETCH_GRAPHQL.<span class="fn">setEndpoint</span>(<span class="com">/* commerce_core_endpoint */</span>);
+  CORE_FETCH_GRAPHQL.<span class="fn">setFetchGraphQlHeaders</span>((prev) =&gt;
+    ({ ...prev, ...<span class="fn">getHeaders</span>(<span class="str">'all'</span>) }));
 
-  CS_FETCH_GRAPHQL.<span class="fn">setEndpoint</span>(<span class="kw">await</span> <span class="fn">commerceEndpointWithQueryParams</span>());
-  CS_FETCH_GRAPHQL.<span class="fn">setFetchGraphQlHeaders</span>(
-    (prev) =&gt; ({ ...prev, ...<span class="fn">getHeaders</span>(<span class="str">'cs'</span>) }));
+  <span class="com">// Set Fetch GraphQL (Catalog Service)</span>
+  CS_FETCH_GRAPHQL.<span class="fn">setEndpoint</span>(<span class="com">/* commerce_catalog_endpoint */</span>);
+  CS_FETCH_GRAPHQL.<span class="fn">setFetchGraphQlHeaders</span>((prev) =&gt;
+    ({ ...prev, ...<span class="fn">getHeaders</span>(<span class="str">'cs'</span>) }));
 
   <span class="kw">return</span> <span class="fn">initializeDropins</span>();
 }</pre>
@@ -911,7 +964,7 @@ document.<span class="fn">addEventListener</span>(<span class="str">'prerenderin
 <section class="slide" data-notes="This is the pivotal slide. Five visible regions, color-coded. Imports — top — split into EDS imports (readBlockConfig from aem.js) and dropin imports (render, containers). Side-effect import of the cart initializer guarantees the dropin is booted before this block decorates. Inside decorate: read the author config, build the EDS skeleton with createContextualFragment, attach to block, then call provider.render(Container, props)(domElement) for each container. The block owns the DOM; the dropin owns what's inside the slots.">
   <span class="eyebrow">Section 3 · Code walkthrough</span>
   <h2>How a block mounts a dropin</h2>
-  <pre class="code" style="font-size:clamp(.74rem,.98vw,.92rem); max-height:62vh;"><span class="com">// blocks/commerce-cart/commerce-cart.js (excerpt — verbatim from the integration branch)</span>
+  <pre class="code" style="font-size:clamp(.74rem,.98vw,.92rem); max-height:62vh;"><span class="com">// blocks/commerce-cart/commerce-cart.js</span>
 
 <span class="com">// ── 1. DROPIN imports — render system + containers ──────────────────────────</span>
 <span class="kw">import</span> { render <span class="kw">as</span> provider } <span class="kw">from</span> <span class="str">'@dropins/storefront-cart/render.js'</span>;
@@ -960,20 +1013,8 @@ document.<span class="fn">addEventListener</span>(<span class="str">'prerenderin
   <h2>What the author sees</h2>
   <div class="grid-2">
     <div>
-      <h3>The schema (_commerce-cart.json)</h3>
-      <pre class="code" style="font-size:.82rem;">{ <span class="str">"id"</span>: <span class="str">"commerce-cart"</span>,
-  <span class="str">"plugins"</span>: { <span class="str">"da"</span>: { <span class="str">"type"</span>: <span class="str">"key-value-block"</span> }},
-  <span class="str">"models"</span>: [{
-    <span class="str">"id"</span>: <span class="str">"commerce-cart"</span>,
-    <span class="str">"fields"</span>: [
-      { <span class="str">"component"</span>: <span class="str">"boolean"</span>, <span class="str">"name"</span>: <span class="str">"hide-heading"</span> },
-      { <span class="str">"component"</span>: <span class="str">"text"</span>,    <span class="str">"name"</span>: <span class="str">"max-items"</span> },
-      { <span class="str">"component"</span>: <span class="str">"boolean"</span>, <span class="str">"name"</span>: <span class="str">"enable-estimate-shipping"</span> },
-      { <span class="str">"component"</span>: <span class="str">"text"</span>,    <span class="str">"name"</span>: <span class="str">"checkout-url"</span> },
-      <span class="com">/* ... 6 more fields ... */</span>
-    ]
-  }]
-}</pre>
+      <h3>Authoring in Experience Workspace</h3>
+      <img src="images/experience-workspace.png" alt="Experience Workspace authoring view showing a product-list-page block with urlPath and enrichment fields, alongside a live storefront preview of a Bags category page" style="width:100%; height:auto; border:1px solid var(--line); border-radius:8px; display:block;" />
     </div>
     <div>
       <h3>What the author edits in DA</h3>
@@ -1107,12 +1148,46 @@ document.<span class="fn">addEventListener</span>(<span class="str">'prerenderin
 <section class="slide qa-slide" data-notes="Open questions. Common ones to expect: 'how do we customize a dropin beyond slots?' (event hooks first, then slot content, then a custom block); 'can we mix dropins with our own React app?' (yes — they're framework-agnostic at the boundary); 'what about SEO?' (prerender service generates one static HTML per SKU); 'multi-store?' (config service per store view).">
   <h1>?</h1>
   <p>Stephen Rugh · rugh@adobe.com</p>
-  <p style="margin-top:2rem;"><span class="pill">EDS docs · aem.live</span> <span class="pill">Storefront docs · experienceleague.adobe.com</span> <span class="pill">Boilerplate · github.com/hlxsites/aem-boilerplate-commerce</span></p>
+  <p style="margin-top:2rem;"><a class="pill" href="https://www.aem.live/" target="_blank" rel="noopener">EDS docs · aem.live</a> <a class="pill" href="https://experienceleague.adobe.com/developer/commerce/storefront/" target="_blank" rel="noopener">Storefront docs · experienceleague.adobe.com</a> <a class="pill" href="https://github.com/hlxsites/aem-boilerplate-commerce" target="_blank" rel="noopener">Boilerplate · github.com/hlxsites/aem-boilerplate-commerce</a></p>
 </section>
 
 </main>
 
 <aside id="notes" hidden><span class="label">Notes</span><p id="notes-text"></p></aside>
+<div id="progress"><div id="progress-bar"></div></div>
+<div id="eject-wrap">
+  <button id="eject" title="Eject to live demo" aria-label="Eject to live demo" aria-haspopup="menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <!-- canopy -->
+      <path d="M3 11 A9 9 0 0 1 21 11"/>
+      <!-- canopy panels -->
+      <path d="M3 11 Q 7.5 7 12 11"/>
+      <path d="M21 11 Q 16.5 7 12 11"/>
+      <!-- suspension lines -->
+      <line x1="3" y1="11" x2="12" y2="18"/>
+      <line x1="9" y1="11" x2="12" y2="18"/>
+      <line x1="15" y1="11" x2="12" y2="18"/>
+      <line x1="21" y1="11" x2="12" y2="18"/>
+      <!-- harness / payload -->
+      <rect x="10" y="18" width="4" height="3" rx="0.6"/>
+    </svg>
+  </button>
+  <div id="eject-menu" role="menu" aria-label="Live demo links">
+    <span class="label">Eject to…</span>
+    <a href="https://main--aem-boilerplate-commerce--hlxsites.aem.live/" target="_blank" rel="noopener noreferrer" role="menuitem">
+      Storefront
+      <span class="sub">main--aem-boilerplate-commerce--hlxsites.aem.live</span>
+    </a>
+    <a href="https://da.live/app/adobe-commerce/storefront-tools/tools/site-creator/site-creator" target="_blank" rel="noopener noreferrer" role="menuitem">
+      Site Creator
+      <span class="sub">da.live/.../site-creator</span>
+    </a>
+    <a href="https://da.live/edit#/adobe-commerce/boilerplate/apparel" target="_blank" rel="noopener noreferrer" role="menuitem">
+      DA · apparel page
+      <span class="sub">da.live/edit#/adobe-commerce/boilerplate/apparel</span>
+    </a>
+  </div>
+</div>
 <footer id="hud"><span id="counter">1 / 30</span></footer>
 <div id="help" hidden><div class="panel">
   <h3 style="color:var(--accent-soft); margin-top:0;">Keyboard</h3>
@@ -1136,6 +1211,7 @@ document.<span class="fn">addEventListener</span>(<span class="str">'prerenderin
   const notesText = document.getElementById('notes-text');
   const hud = document.getElementById('hud');
   const help = document.getElementById('help');
+  const progressBar = document.getElementById('progress-bar');
   let current = 0;
 
   function show(i, replace) {
@@ -1145,6 +1221,7 @@ document.<span class="fn">addEventListener</span>(<span class="str">'prerenderin
     current = i;
     counter.textContent = (i + 1) + ' / ' + total;
     notesText.textContent = slides[i].getAttribute('data-notes') || '';
+    progressBar.style.width = ((i + 1) / total * 100) + '%';
     const hash = '#' + (i + 1);
     if (replace) history.replaceState(null, '', hash);
     else if (location.hash !== hash) history.pushState(null, '', hash);
@@ -1158,6 +1235,24 @@ document.<span class="fn">addEventListener</span>(<span class="str">'prerenderin
   function toggleHelp() {
     help.hidden = !help.hidden;
   }
+
+  // Eject menu — toggles a fly-out with three demo links (each anchor opens in a new tab on click,
+  // sidestepping browser popup blockers that throttle multi-window.open() per user gesture)
+  const ejectBtn = document.getElementById('eject');
+  const ejectMenu = document.getElementById('eject-menu');
+  function setEjectOpen(open) {
+    ejectBtn.classList.toggle('open', open);
+    ejectMenu.classList.toggle('open', open);
+    ejectBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  ejectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setEjectOpen(!ejectMenu.classList.contains('open'));
+  });
+  document.addEventListener('click', (e) => {
+    if (!ejectMenu.contains(e.target) && e.target !== ejectBtn) setEjectOpen(false);
+  });
+  ejectMenu.addEventListener('click', () => setEjectOpen(false));
 
   function fromHash() {
     const m = /^#(\d+)$/.exec(location.hash);
