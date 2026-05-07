@@ -7,3 +7,8 @@ A lightning-talk presentation covering the EDS stack, the dropins ecosystem, and
 **[▶ Open slides](https://raw.githack.com/adobe-commerce/eds-storefront-presentation/main/index.html)**
 
 Navigate with arrow keys or `←` / `→`. Press `?` for help.
+
+## Local Development
+
+`npx serve .`
+
